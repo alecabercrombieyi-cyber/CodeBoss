@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Logistics Suite</title>
+<meta name="description" content="Built by brokers, for brokers. The story behind Logistics Suite.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23faf7f2'/%3E%3Ccircle cx='16' cy='13' r='8' fill='%23e8b4c8'/%3E%3Cpath d='M12 13a4 4 0 0 1 8 0' fill='none' stroke='%23c9a0d9' stroke-width='1.5'/%3E%3Crect x='15' y='20' width='2' height='8' rx='1' fill='%23d4c0a8'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#faf7f2;--surface:#fff;--surface-2:#f7f3ee;--border:#e8e2d9;--border-2:#d9d1c5;--text:#2d2a26;--text-2:#4a4640;--text-3:#7a756d;--text-4:#a8a29d;--pink:#d4738c;--pink-soft:#e8b4c8;--pink-bg:#fdf2f6;--pink-border:#f0d0dc;--purple:#9b7bb8;--purple-soft:#c9a0d9;--purple-bg:#f5f0fa;--purple-border:#ddd0e8;--shadow-1:0 1px 3px rgba(45,42,38,.04);--shadow-2:0 4px 14px rgba(45,42,38,.05);--shadow-3:0 12px 32px rgba(45,42,38,.07);--radius:14px;--font:'DM Sans',-apple-system,sans-serif;--slide:cubic-bezier(.2,.8,.3,1)}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{min-height:100vh;overflow-x:hidden}
+
+.header{background:rgba(250,247,242,.86);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.logo svg{width:34px;height:34px}
+.brand-name{font-size:16px;font-weight:700;letter-spacing:-.02em}
+.header-nav{display:flex;gap:24px;align-items:center}
+.header-nav a{color:var(--text-3);font-size:13px;font-weight:500;text-decoration:none;transition:color .15s}
+.header-nav a:hover,.header-nav a.on{color:var(--text)}
+.btn{border:none;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:all .18s var(--slide);white-space:nowrap;text-decoration:none}
+.btn-pink{background:var(--pink);color:#fff}.btn-pink:hover{background:#c0607a;transform:translateY(-1px)}
+.btn-outline{background:var(--surface);border:1px solid var(--border);color:var(--text-2)}.btn-outline:hover{background:var(--surface-2);border-color:var(--border-2)}
+
+/* HERO */
+.about-hero{max-width:860px;margin:0 auto;padding:72px 28px 48px;text-align:center;opacity:0;transform:translateX(-30px);animation:slideInLeft .7s var(--slide) .05s forwards}
+.about-hero .kicker{font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.18em;margin-bottom:14px}
+.about-hero h1{font-size:54px;font-weight:800;letter-spacing:-.035em;line-height:1.05;margin-bottom:18px}
+.about-hero h1 .accent{color:var(--pink);font-style:italic;font-weight:700}
+.about-hero .lede{font-size:18px;color:var(--text-3);line-height:1.65;max-width:620px;margin:0 auto}
+
+/* SECTIONS */
+section{padding:56px 28px;max-width:900px;margin:0 auto;position:relative}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center}
+.row.reverse{grid-template-columns:1fr 1fr}
+.row-text{opacity:0;transform:translateX(-30px);transition:all .7s var(--slide)}
+.row-card{opacity:0;transform:translateX(30px);transition:all .7s var(--slide)}
+.row.reverse .row-text{transform:translateX(30px)}
+.row.reverse .row-card{transform:translateX(-30px)}
+.row.in .row-text,.row.in .row-card{opacity:1;transform:translateX(0)}
+.row h2{font-size:30px;font-weight:800;letter-spacing:-.025em;margin-bottom:14px;line-height:1.15}
+.row p{font-size:15px;color:var(--text-3);line-height:1.7;margin-bottom:10px}
+.row .kicker{font-size:11px;font-weight:700;color:var(--pink);text-transform:uppercase;letter-spacing:.16em;margin-bottom:10px}
+
+.quote-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:32px;box-shadow:var(--shadow-2);position:relative}
+.quote-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--pink-soft),var(--purple-soft));border-radius:18px 18px 0 0}
+.quote-card .q{font-size:20px;font-weight:600;letter-spacing:-.015em;line-height:1.45;color:var(--text);margin-bottom:18px}
+.quote-card .q::before{content:'"';font-size:42px;color:var(--pink-soft);line-height:0;position:relative;top:14px;margin-right:2px}
+.quote-card .attr{font-size:12px;color:var(--text-4);font-weight:600;letter-spacing:.02em}
+
+.principle-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;transition:all .25s var(--slide)}
+.principle-card:hover{transform:translateX(6px);border-color:var(--pink-border);box-shadow:var(--shadow-2)}
+.principle-card .p-num{font-size:11px;font-weight:800;color:var(--purple);letter-spacing:.12em;margin-bottom:8px}
+.principle-card h3{font-size:16px;font-weight:800;margin-bottom:6px;letter-spacing:-.01em}
+.principle-card p{font-size:13px;color:var(--text-3);line-height:1.6}
+
+.principles{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+
+/* CTA */
+.cta{text-align:center;padding:72px 28px;background:var(--surface-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:40px}
+.cta h2{font-size:36px;font-weight:800;letter-spacing:-.03em;margin-bottom:12px}
+.cta p{font-size:15px;color:var(--text-3);margin-bottom:24px}
+.cta-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+footer{padding:40px 28px 28px;text-align:center}
+footer p{font-size:12px;color:var(--text-4);line-height:1.8}
+footer .tag{font-size:13px;color:var(--text-3);font-weight:600;margin-bottom:6px}
+
+@keyframes slideInLeft{to{opacity:1;transform:translateX(0)}}
+
+@media(max-width:760px){
+  .row,.row.reverse{grid-template-columns:1fr;gap:20px}
+  .about-hero h1{font-size:38px}
+  .cta h2{font-size:28px}
+  .principles{grid-template-columns:1fr}
+  .header-nav{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a class="brand" href="index.html">
+    <div class="logo"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="13" r="9" fill="#e8b4c8"/><path d="M10 10c1.5-2.5 4.5-4.5 8-3.5" stroke="#c9a0d9" stroke-width="1.8" stroke-linecap="round" opacity=".7"/><path d="M11.5 15c1.5-2.5 4-3.5 6.5-3" stroke="#f2d0de" stroke-width="1.5" stroke-linecap="round" opacity=".6"/><rect x="15" y="21" width="2.2" height="8" rx="1.1" fill="#d4c0a8"/></svg></div>
+    <span class="brand-name">Logistics Suite</span>
+  </a>
+  <nav class="header-nav">
+    <a href="index.html#tools">Tools</a>
+    <a href="index.html#pricing">Pricing</a>
+    <a href="about.html" class="on">About</a>
+    <a href="index.html#signin">Sign in</a>
+  </nav>
+</header>
+
+<main>
+
+<section class="about-hero">
+  <div class="kicker">About</div>
+  <h1>Built by brokers,<br><span class="accent">for brokers.</span></h1>
+  <p class="lede">Logistics Suite is a set of quiet, practical tools for the freight brokers who actually move the loads. No buzzwords. No 30-minute demos. Just the stuff you wish your other software already did.</p>
+</section>
+
+<section>
+  <div class="row">
+    <div class="row-text">
+      <div class="kicker">Our story</div>
+      <h2>We got tired of waiting on software that didn't know the job.</h2>
+      <p>After years of bouncing between load boards, TMS tabs, spreadsheets, and Slack threads, we started building the tools we wished we had. A load manager that opens in a second. A freight matcher that understands lanes. A data-wash that handles the junk in broker data so you don't have to.</p>
+      <p>Every tool in this suite started as a fix for something that was slowing us down on a Tuesday afternoon.</p>
+    </div>
+    <div class="row-card">
+      <div class="quote-card">
+        <div class="q">Every tool started as a fix for a Tuesday afternoon — not a product roadmap.</div>
+        <div class="attr">— The team behind Logistics Suite</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="row reverse">
+    <div class="row-card">
+      <div class="quote-card">
+        <div class="q">Integrated. Simple. Controlled. Efficient. That's the whole pitch. The tools make good on it.</div>
+        <div class="attr">— Our four-word spec</div>
+      </div>
+    </div>
+    <div class="row-text">
+      <div class="kicker">What we believe</div>
+      <h2>Four words. We judge every feature against them.</h2>
+      <p><strong>Integrated</strong> — your tools should know each other. A load you created in one place should be visible everywhere else, without a sync job.</p>
+      <p><strong>Simple</strong> — if it takes a manual, it's broken.</p>
+      <p><strong>Controlled</strong> — your data, your account, your choice. No dark patterns, no surprise bills.</p>
+      <p><strong>Efficient</strong> — minutes, not hours. Every tool has a stopwatch we measure against.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="kicker" style="text-align:center;font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.18em;margin-bottom:18px">How we build</div>
+  <h2 style="text-align:center;font-size:30px;font-weight:800;letter-spacing:-.025em;margin-bottom:28px">Principles that hold up on deadline.</h2>
+  <div class="principles">
+    <div class="principle-card"><div class="p-num">01</div><h3>Broker-first</h3><p>Every feature is pressure-tested against a real workflow. If it doesn't help a broker move loads faster, it doesn't ship.</p></div>
+    <div class="principle-card"><div class="p-num">02</div><h3>No setup tax</h3><p>Sign in, open a tool, get work done. No onboarding calls, no implementation fees.</p></div>
+    <div class="principle-card"><div class="p-num">03</div><h3>One suite, one login</h3><p>Every tool shares your account. Switch between Load Manager, Freight Matcher, and CLIS without re-authenticating.</p></div>
+    <div class="principle-card"><div class="p-num">04</div><h3>Your data stays yours</h3><p>Your inputs belong to your account. Export anytime. Cancel anytime.</p></div>
+  </div>
+</section>
+
+<section class="cta">
+  <h2>Ready to try it?</h2>
+  <p>Core tools are free, forever. CLIS is the only paid upgrade — and only if you want it.</p>
+  <div class="cta-row">
+    <a href="index.html#signin" class="btn btn-pink" style="padding:13px 24px;font-size:14px;border-radius:12px">Get started free →</a>
+    <a href="index.html#tools" class="btn btn-outline" style="padding:13px 24px;font-size:14px;border-radius:12px">See the tools</a>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p class="tag">Built by brokers, for brokers.</p>
+  <p>Integrated · Simple · Controlled · Efficient</p>
+  <p style="margin-top:12px">&copy; Logistics Suite</p>
+</footer>
+
+<script>
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.2});
+document.querySelectorAll('.row').forEach(r=>io.observe(r));
+</script>
+</body>
+</html>

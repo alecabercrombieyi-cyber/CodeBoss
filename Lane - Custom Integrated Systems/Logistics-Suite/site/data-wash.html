@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Wash — Synthetic Data Generator</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%2310b981'/><stop offset='100%25' stop-color='%23059669'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='%230a0f1a'/><path d='M50 15 L78 28 V52 C78 72 50 85 50 85 C50 85 22 72 22 52 V28 Z' fill='url(%23g)'/><path d='M42 52 L48 58 L60 44' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0f1a;
+    --surface: #111827;
+    --surface-light: #1a2332;
+    --border: rgba(110,231,183,0.08);
+    --accent: #10b981;
+    --accent-light: #6ee7b7;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --synth-bg: rgba(16,185,129,0.15);
+    --synth-border: rgba(16,185,129,0.4);
+    --synth-text: #6ee7b7;
+    --preserve-bg: rgba(96,165,250,0.15);
+    --preserve-border: rgba(96,165,250,0.4);
+    --preserve-text: #93bbfd;
+    --redact-bg: rgba(248,113,113,0.15);
+    --redact-border: rgba(248,113,113,0.4);
+    --redact-text: #fca5a5;
+  }
+
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Background effects */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; opacity: 0.03; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+  .glow-top { position: fixed; top: -200px; right: -200px; width: 600px; height: 600px; background: radial-gradient(circle, rgba(16,185,129,0.06), transparent 70%); pointer-events: none; }
+  .glow-bottom { position: fixed; bottom: -200px; left: -200px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(6,95,70,0.05), transparent 70%); pointer-events: none; }
+
+  .container { max-width: 880px; margin: 0 auto; padding: 40px 24px; position: relative; z-index: 1; }
+
+  /* Animations */
+  @keyframes spin-wash { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  @keyframes pulse-glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+  @keyframes slide-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes wash-progress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+  .animate-up { animation: slide-up 0.4s ease-out both; }
+  .animate-fade { animation: fade-in 0.3s ease-out; }
+
+  .wash-shimmer {
+    height: 2px; border-radius: 2px; margin-top: 24px;
+    background: linear-gradient(90deg, transparent, rgba(110,231,183,0.15), transparent);
+    background-size: 200% 100%;
+    animation: wash-progress 2s ease-in-out infinite;
+  }
+
+  /* Header */
+  header { text-align: center; margin-bottom: 48px; animation: slide-up 0.5s ease-out; }
+  .logo-row { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .logo-icon {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), #059669);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 24px rgba(16,185,129,0.3);
+  }
+  h1 {
+    font-family: 'Instrument Serif', serif; font-size: 36px; font-weight: 400;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--accent-light), #34d399, #a7f3d0);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .subtitle { font-size: 13px; color: var(--text-dim); max-width: 500px; margin: 0 auto; line-height: 1.7; }
+
+  /* Steps */
+  .steps { display: flex; justify-content: center; gap: 8px; margin-bottom: 40px; animation: slide-up 0.5s ease-out 0.1s both; }
+  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: #1e293b; transition: all 0.3s ease; }
+  .step-dot.active { background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .step-dot.done { background: var(--accent-light); }
+  .step-label { font-size: 11px; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; }
+  .step-label.active { color: var(--accent-light); }
+  .step-sep { width: 24px; height: 1px; background: #1e293b; align-self: center; }
+  .step-item { display: flex; align-items: center; gap: 8px; }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border-radius: 16px; border: 1px solid var(--border);
+    overflow: hidden; margin-bottom: 24px;
+  }
+  .card-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+  }
+  .card-body { padding: 24px; }
+
+  /* Buttons */
+  .btn {
+    padding: 10px 24px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer;
+    font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500;
+    background: var(--surface-light); color: var(--text-muted);
+    transition: all 0.2s ease;
+  }
+  .btn:hover { background: #1f2d3d; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #059669); color: #fff; border: none;
+  }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-primary:disabled { opacity: 0.4; cursor: default; filter: none; }
+  .btn-sm {
+    padding: 5px 12px; border-radius: 6px; font-size: 11px;
+  }
+  .btn-blue { background: rgba(96,165,250,0.1); border-color: rgba(96,165,250,0.2); color: #93bbfd; }
+  .btn-green { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); color: var(--accent-light); }
+
+  /* Format toggles */
+  .fmt-btn {
+    padding: 5px 14px; border-radius: 6px; border: none; cursor: pointer;
+    background: transparent; color: var(--text-dim);
+    font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s ease;
+  }
+  .fmt-btn.active { background: rgba(16,185,129,0.15); color: var(--accent-light); }
+  .fmt-btn-lg {
+    padding: 8px 20px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface-light); color: var(--text-dim);
+    font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500;
+    text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
+  }
+  .fmt-btn-lg.active {
+    background: rgba(16,185,129,0.15); color: var(--accent-light);
+    border-color: rgba(16,185,129,0.3);
+  }
+
+  /* Textarea */
+  textarea {
+    width: 100%; min-height: 280px; padding: 20px; border: none; outline: none;
+    background: transparent; color: #c8d6e5; resize: vertical;
+    font-family: 'DM Mono', monospace; font-size: 13px; line-height: 1.6;
+  }
+
+  /* Fields pills */
+  .field-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: 8px;
+    animation: slide-up 0.3s ease-out both; transition: all 0.3s ease;
+  }
+  .field-pill .name { font-size: 13px; font-weight: 500; }
+  .field-pill select {
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text); border-radius: 6px; padding: 2px 6px;
+    font-size: 11px; font-family: 'DM Mono', monospace; cursor: pointer; outline: none;
+  }
+  .fields-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* Stats bar */
+  .stats-bar { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat-box {
+    padding: 12px 18px; border-radius: 12px; background: var(--surface);
+    border: 1px solid var(--border); flex: 1 1 auto; min-width: 100px;
+  }
+  .stat-val { font-size: 20px; font-weight: 500; color: var(--accent-light); }
+  .stat-label { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+  /* Options grid */
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .options-grid label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; color: var(--text-muted); }
+  .options-grid input[type="checkbox"] { accent-color: var(--accent); }
+  .options-grid select, .options-grid input[type="number"] {
+    width: 100%; padding: 8px 12px; border-radius: 8px;
+    background: var(--surface-light); border: 1px solid var(--border); color: var(--text);
+    font-family: 'DM Mono', monospace; font-size: 13px; outline: none;
+  }
+  .opt-label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px; }
+
+  /* Actions bar */
+  .actions { display: flex; justify-content: space-between; margin-top: 4px; }
+  .actions-end { display: flex; justify-content: flex-end; margin-top: 20px; }
+
+  /* Error */
+  .error-box {
+    margin-top: 12px; padding: 10px 16px; border-radius: 8px;
+    background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.2);
+    color: #fca5a5; font-size: 12px;
+  }
+
+  /* Wash animation */
+  .wash-anim { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 32px 0; }
+  .spinner-wrap { position: relative; width: 80px; height: 80px; }
+  .spinner-ring {
+    width: 80px; height: 80px; border-radius: 50%;
+    border: 3px solid rgba(16,185,129,0.2); border-top-color: var(--accent);
+    animation: spin-wash 1s linear infinite;
+  }
+  .spinner-glow {
+    position: absolute; inset: 12px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(16,185,129,0.2), transparent);
+    animation: pulse-glow 1.5s ease-in-out infinite;
+  }
+  .spinner-pct {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--accent-light); font-weight: 500;
+  }
+  .progress-track { width: 240px; height: 4px; border-radius: 4px; background: rgba(16,185,129,0.1); overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); transition: width 0.3s ease; }
+  .wash-label { font-size: 12px; color: rgba(110,231,183,0.44); }
+
+  /* Success */
+  .success-bar {
+    background: rgba(16,185,129,0.08); border-radius: 16px;
+    border: 1px solid rgba(16,185,129,0.15); padding: 20px 24px;
+    margin-bottom: 24px; display: flex; align-items: center; gap: 16px;
+  }
+  .success-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(16,185,129,0.15); display: flex;
+    align-items: center; justify-content: center;
+    animation: float 3s ease-in-out infinite; flex-shrink: 0;
+  }
+  .success-title { font-size: 15px; font-weight: 500; color: var(--accent-light); }
+  .success-detail { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+  /* Table */
+  .preview-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .preview-table th {
+    padding: 10px 14px; text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500; white-space: nowrap;
+    background: rgba(0,0,0,0.2);
+  }
+  .preview-table td { padding: 8px 14px; white-space: nowrap; color: #cbd5e1; border-bottom: 1px solid var(--border); }
+  .preview-table .col-synth { color: var(--accent-light); }
+  .preview-table .col-preserve { color: var(--preserve-text); }
+  .preview-table .col-redact { color: var(--redact-text); }
+  .preview-table .cell-redact { color: rgba(252,165,165,0.44); font-style: italic; }
+
+  /* Raw output */
+  pre.raw-output {
+    padding: 20px; margin: 0; font-size: 11px; line-height: 1.5;
+    color: var(--text-muted); max-height: 240px; overflow-y: auto;
+    background: rgba(0,0,0,0.2); font-family: 'DM Mono', monospace;
+    white-space: pre-wrap; word-break: break-all;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center; margin-top: 56px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  footer p { font-size: 11px; color: #334155; line-height: 1.7; }
+
+  .hidden { display: none !important; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .options-grid { grid-template-columns: 1fr; }
+    .stats-bar { gap: 8px; }
+    .stat-box { min-width: 70px; padding: 10px 12px; }
+    h1 { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+<div class="glow-top"></div>
+<div class="glow-bottom"></div>
+
+<div class="container">
+  <!-- Header -->
+  <header>
+    <div class="logo-row">
+      <div class="logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h1>Data Wash</h1>
+    </div>
+    <p class="subtitle">
+      Transform sensitive data into privacy-safe synthetic records.<br>
+      Preserve structure and statistical properties without exposing PII.
+    </p>
+  </header>
+
+  <!-- Step indicator -->
+  <div class="steps" id="stepIndicator"></div>
+
+  <!-- INPUT STEP -->
+  <div id="stepInput" class="animate-up">
+    <div class="card">
+      <div class="card-header">
+        <div style="display:flex;gap:8px">
+          <button class="fmt-btn active" data-fmt="json" onclick="setInputFormat('json')">JSON</button>
+          <button class="fmt-btn" data-fmt="csv" onclick="setInputFormat('csv')">CSV</button>
+          <button class="fmt-btn" data-fmt="xlsx" onclick="setInputFormat('xlsx')">XLSX</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm btn-blue" onclick="loadSample()">load sample</button>
+          <button class="btn btn-sm" onclick="document.getElementById('fileInput').click()">upload file</button>
+          <input type="file" id="fileInput" accept=".json,.csv,.xlsx,.xls" style="display:none" onchange="handleFileUpload(event)">
+        </div>
+      </div>
+      <textarea id="inputArea" placeholder='[&#10;  { "name": "...", "email": "..." },&#10;  ...&#10;]'></textarea>
+    </div>
+    <div id="errorBox" class="error-box hidden"></div>
+    <div class="actions-end">
+      <button class="btn btn-primary" onclick="handleParse()">Parse &amp; Configure →</button>
+    </div>
+  </div>
+
+  <!-- CONFIGURE STEP -->
+  <div id="stepConfigure" class="animate-up hidden">
+    <div class="stats-bar" id="statsBar"></div>
+
+    <div class="card">
+      <div class="card-body">
+        <h3 style="font-family:'Instrument Serif',serif;font-size:20px;font-weight:400;margin:0 0 6px;color:#e2e8f0">Field Configuration</h3>
+        <p style="font-size:12px;color:var(--text-dim);margin:0 0 20px">
+          Choose how each field is transformed.
+          <span style="color:var(--synth-text)">Synthesize</span> replaces with realistic fake data.
+          <span style="color:var(--preserve-text)">Preserve</span> keeps values.
+          <span style="color:var(--redact-text)">Redact</span> removes entirely.
+        </p>
+        <div class="fields-wrap" id="fieldsWrap"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h3 style="font-family:'Instrument Serif',serif;font-size:20px;font-weight:400;margin:0 0 16px;color:#e2e8f0">Options</h3>
+        <div class="options-grid">
+          <div>
+            <label class="opt-label">Row multiplier</label>
+            <select id="rowMultiplier">
+              <option value="1">1x</option><option value="2">2x</option>
+              <option value="5">5x</option><option value="10">10x</option>
+              <option value="25">25x</option><option value="50">50x</option>
+            </select>
+          </div>
+          <div>
+            <label class="opt-label">Random seed</label>
+            <input type="number" id="seedInput" value="42">
+          </div>
+          <label class="check"><input type="checkbox" id="preserveFormat" checked> Preserve formatting patterns</label>
+          <label class="check"><input type="checkbox" id="preserveDistribution" checked> Preserve numeric distributions</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h3 style="font-family:'Instrument Serif',serif;font-size:20px;font-weight:400;margin:0 0 16px;color:#e2e8f0">Output Format</h3>
+        <div style="display:flex;gap:8px">
+          <button class="fmt-btn-lg active" data-outfmt="json" onclick="setOutputFormat('json')">JSON</button>
+          <button class="fmt-btn-lg" data-outfmt="csv" onclick="setOutputFormat('csv')">CSV</button>
+          <button class="fmt-btn-lg" data-outfmt="xlsx" onclick="setOutputFormat('xlsx')">XLSX</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" onclick="goToStep('input')">← Back</button>
+      <button class="btn btn-primary" onclick="handleWash()">Wash Data →</button>
+    </div>
+  </div>
+
+  <!-- WASHING STEP -->
+  <div id="stepWashing" class="hidden">
+    <div class="card animate-fade" style="padding:40px;text-align:center">
+      <div class="wash-anim">
+        <div class="spinner-wrap">
+          <div class="spinner-ring"></div>
+          <div class="spinner-glow"></div>
+          <div class="spinner-pct" id="washPct">0%</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="washBar" style="width:0%"></div></div>
+        <span class="wash-label">washing data...</span>
+      </div>
+      <div class="wash-shimmer"></div>
+    </div>
+  </div>
+
+  <!-- OUTPUT STEP -->
+  <div id="stepOutput" class="animate-up hidden">
+    <div class="success-bar">
+      <div class="success-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"/></svg>
+      </div>
+      <div>
+        <div class="success-title">Data washed successfully</div>
+        <div class="success-detail" id="successDetail"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span style="font-size:12px;color:var(--text-dim)">Preview (first 10 rows)</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="handleCopy()">copy all</button>
+          <button class="btn btn-sm btn-green" id="downloadBtn" onclick="handleDownload()">download</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="preview-table" id="previewTable"></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span style="font-size:12px;color:var(--text-dim)" id="rawLabel">Raw JSON output</span>
+      </div>
+      <pre class="raw-output" id="rawOutput"></pre>
+    </div>
+
+    <div class="actions">
+      <button class="btn" onclick="goToStep('configure')">← Reconfigure</button>
+      <button class="btn" onclick="resetAll()">New Data</button>
+    </div>
+  </div>
+
+  <footer>
+    <p>
+      All processing happens locally in your browser. No data is sent to any server.<br>
+      Synthetic data preserves statistical properties while eliminating identifiable information.
+    </p>
+  </footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let inputFormat = 'json';
+let outputFormat = 'json';
+let parsedData = null;
+let xlsxParsedData = null;
+let fields = {};
+let syntheticData = null;
+let currentStep = 'input';
+
+const STEPS = ['input','configure','washing','output'];
+
+// ═══════════════════════════════════════════
+// DATA POOLS
+// ═══════════════════════════════════════════
+const FIRST_NAMES=["Alex","Jordan","Morgan","Casey","Taylor","Riley","Quinn","Avery","Cameron","Dakota","Hayden","Emery","Reese","Finley","Sage","Rowan","Ellis","Blair","Drew","Lane","Kai","Ari","Eden","Shay","Wren","Phoenix","Skyler","Marley","Harper","Lennox","Zion","Nova","River","Oakley","Remy","Jules","Aspen","Briar","Haven","Indigo"];
+const LAST_NAMES=["Chen","Okafor","Petrov","Nakamura","Silva","Andersen","Kowalski","Moreau","Singh","Alvarez","Tanaka","Bergström","Kim","Osei","Fischer","Volkov","Santos","Leclerc","Gupta","Novak","Ito","Fernández","Olsen","Mensah","Weber","Kuznetsov","Costa","Delacroix","Sharma","Horváth"];
+const DOMAINS=["datamail.net","privacybox.io","synthmail.org","vaultpost.com","shieldmail.co","anoncast.net","coverbox.io","maskmail.org"];
+const STREETS=["Maple","Oak","Cedar","Pine","Birch","Elm","Willow","Ash","Hazel","Laurel","Cypress","Alder","Spruce","Magnolia","Sequoia","Redwood","Juniper","Hemlock","Sycamore","Poplar"];
+const STREET_TYPES=["St","Ave","Blvd","Dr","Ln","Way","Ct","Pl","Rd","Cir"];
+const CITIES=["Northfield","Southport","Eastbrook","Westdale","Clearwater","Fairview","Brookside","Lakeview","Summit","Crestwood","Ridgemont","Hillcrest","Meadowbrook","Stonebridge","Oakdale"];
+const STATES=["CA","TX","NY","FL","IL","PA","OH","GA","NC","MI","NJ","VA","WA","AZ","MA","TN","IN","MO","MD","WI"];
+const COMPANIES=["Helix Corp","Nimbus Ltd","Vertex Group","Cascade Inc","Pinnacle Co","Stratos LLC","Ember Solutions","Onyx Dynamics","Prism Holdings","Zenith Partners","Crest Industries","Forge Systems","Lucent Tech","Radial Networks","Cobalt Ventures"];
+
+const SAMPLE_JSON = JSON.stringify([
+  {name:"Alice Johnson",email:"alice.j@company.com",phone:"555-123-4567",ssn:"123-45-6789",salary:85000,department:"Engineering",city:"Portland",state:"OR",hire_date:"2019-03-15"},
+  {name:"Bob Chen",email:"bchen@firm.io",phone:"555-987-6543",ssn:"987-65-4321",salary:72000,department:"Marketing",city:"Austin",state:"TX",hire_date:"2020-07-22"},
+  {name:"Carol Smith",email:"carol.s@enterprise.net",phone:"555-456-7890",ssn:"456-78-9012",salary:95000,department:"Engineering",city:"Seattle",state:"WA",hire_date:"2018-11-01"},
+  {name:"David Park",email:"dpark@startup.co",phone:"555-321-0987",ssn:"321-09-8765",salary:68000,department:"Sales",city:"Denver",state:"CO",hire_date:"2021-01-10"},
+  {name:"Eva Rodriguez",email:"erodriguez@corp.com",phone:"555-654-3210",ssn:"654-32-1098",salary:110000,department:"Engineering",city:"San Francisco",state:"CA",hire_date:"2017-06-30"}
+],null,2);
+
+const SAMPLE_CSV = `name,email,phone,ssn,salary,department,city,state,hire_date
+Alice Johnson,alice.j@company.com,555-123-4567,123-45-6789,85000,Engineering,Portland,OR,2019-03-15
+Bob Chen,bchen@firm.io,555-987-6543,987-65-4321,72000,Marketing,Austin,TX,2020-07-22
+Carol Smith,carol.s@enterprise.net,555-456-7890,456-78-9012,95000,Engineering,Seattle,WA,2018-11-01
+David Park,dpark@startup.co,555-321-0987,321-09-8765,68000,Sales,Denver,CO,2021-01-10
+Eva Rodriguez,erodriguez@corp.com,555-654-3210,654-32-1098,110000,Engineering,San Francisco,CA,2017-06-30`;
+
+// ═══════════════════════════════════════════
+// PRNG
+// ═══════════════════════════════════════════
+function mulberry32(seed) {
+  return function() {
+    let t = (seed += 0x6D2B79F5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ═══════════════════════════════════════════
+// SYNTHETIC GENERATOR
+// ═══════════════════════════════════════════
+function generateSyntheticValue(value, fieldName, rng, pFmt, pDist) {
+  if (value === null || value === undefined || value === '') return value;
+  const lf = (fieldName || '').toLowerCase();
+  const sv = String(value);
+
+  if (lf.includes('first') && lf.includes('name')) return FIRST_NAMES[Math.floor(rng() * FIRST_NAMES.length)];
+  if (lf.includes('last') && lf.includes('name')) return LAST_NAMES[Math.floor(rng() * LAST_NAMES.length)];
+  if (lf === 'name' || lf === 'full_name' || lf === 'fullname') return FIRST_NAMES[Math.floor(rng() * FIRST_NAMES.length)] + ' ' + LAST_NAMES[Math.floor(rng() * LAST_NAMES.length)];
+
+  if (lf.includes('email') || sv.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    const fn = FIRST_NAMES[Math.floor(rng()*FIRST_NAMES.length)].toLowerCase();
+    const ln = LAST_NAMES[Math.floor(rng()*LAST_NAMES.length)].toLowerCase();
+    return fn + (rng()>0.5?'.':'_') + ln + Math.floor(rng()*99) + '@' + DOMAINS[Math.floor(rng()*DOMAINS.length)];
+  }
+
+  if (lf.includes('phone') || lf.includes('tel') || sv.match(/^[\d\s\-\(\)\+]{7,}$/)) {
+    const a=200+Math.floor(rng()*799), m=200+Math.floor(rng()*799), l=1000+Math.floor(rng()*8999);
+    if (pFmt && sv.includes('(')) return `(${a}) ${m}-${l}`;
+    if (pFmt && sv.includes('-')) return `${a}-${m}-${l}`;
+    return `${a}${m}${l}`;
+  }
+
+  if (lf.includes('ssn') || lf.includes('social') || sv.match(/^\d{3}-\d{2}-\d{4}$/)) {
+    return (100+Math.floor(rng()*899))+'-'+(10+Math.floor(rng()*89))+'-'+(1000+Math.floor(rng()*8999));
+  }
+
+  if (lf.includes('address') || lf.includes('street')) {
+    return (100+Math.floor(rng()*9900))+' '+STREETS[Math.floor(rng()*STREETS.length)]+' '+STREET_TYPES[Math.floor(rng()*STREET_TYPES.length)];
+  }
+
+  if (lf.includes('city')) return CITIES[Math.floor(rng()*CITIES.length)];
+  if (lf.includes('state') || lf.includes('province')) return STATES[Math.floor(rng()*STATES.length)];
+  if (lf.includes('zip') || lf.includes('postal')) return String(10000+Math.floor(rng()*89999));
+  if (lf.includes('company') || lf.includes('org') || lf.includes('employer')) return COMPANIES[Math.floor(rng()*COMPANIES.length)];
+
+  if (lf.includes('date') || lf.includes('dob') || lf.includes('birth') || sv.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    const y=1950+Math.floor(rng()*60), mo=1+Math.floor(rng()*12), d=1+Math.floor(rng()*28);
+    return y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  }
+
+  if (lf.includes('ip') || sv.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
+    return [rng(),rng(),rng(),rng()].map(r=>Math.floor(r*255)).join('.');
+  }
+
+  if (lf.includes('id') && !lf.includes('video') && typeof value === 'number') return Math.floor(rng()*900000)+100000;
+
+  if (typeof value === 'number' || (!isNaN(Number(sv)) && sv.trim() !== '')) {
+    const num = Number(sv);
+    if (pDist) {
+      const variance = Math.abs(num)*0.2;
+      const result = num + (rng()-0.5)*2*variance;
+      return Number.isInteger(num) ? Math.round(result) : parseFloat(result.toFixed(2));
+    }
+    return Number.isInteger(num) ? Math.floor(rng()*Math.max(Math.abs(num)*2,100)) : parseFloat((rng()*Math.max(Math.abs(num)*2,100)).toFixed(2));
+  }
+
+  if (sv === 'true' || sv === 'false') return rng()>0.5?'true':'false';
+
+  if (typeof value === 'string' && value.length > 0) {
+    const chars='abcdefghijklmnopqrstuvwxyz'; let result='';
+    for (let i=0;i<value.length;i++) {
+      if(value[i]===' ') result+=' ';
+      else if(/[A-Z]/.test(value[i])) result+=chars[Math.floor(rng()*26)].toUpperCase();
+      else if(/[a-z]/.test(value[i])) result+=chars[Math.floor(rng()*26)];
+      else if(/[0-9]/.test(value[i])) result+=Math.floor(rng()*10);
+      else result+=value[i];
+    }
+    return result;
+  }
+  return value;
+}
+
+// ═══════════════════════════════════════════
+// CSV PARSE / SERIALIZE
+// ═══════════════════════════════════════════
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  return lines.slice(1).map(line => {
+    const vals = []; let cur = '', inQ = false;
+    for (const ch of line) {
+      if (ch === '"') inQ = !inQ;
+      else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    vals.push(cur.trim());
+    const obj = {};
+    headers.forEach((h,i) => { obj[h] = vals[i] || ''; });
+    return obj;
+  });
+}
+
+function getSyntheticMeta() {
+  const synthFields = Object.entries(fields).filter(([,v]) => v.mode === 'synthesize').map(([k]) => k);
+  const preservedFields = Object.entries(fields).filter(([,v]) => v.mode === 'preserve').map(([k]) => k);
+  const redactedFields = Object.entries(fields).filter(([,v]) => v.mode === 'redact').map(([k]) => k);
+  return {
+    _notice: "SYNTHETIC DATA — This dataset was generated by Data Wash to conceal sensitive and personally identifiable information. None of the values in synthesized fields correspond to real individuals, organizations, or events. Do not treat this data as factual. Do not attempt to re-identify or correlate records with real-world entities.",
+    _data_classification: "SYNTHETIC / NON-SENSITIVE",
+    _generated_at: new Date().toISOString(),
+    _generator: "Data Wash — Synthetic Data Generator",
+    _seed: Number($('seedInput').value) || 42,
+    _original_record_count: parsedData ? parsedData.length : 0,
+    _output_record_count: syntheticData ? syntheticData.length : 0,
+    _field_treatment: {
+      synthesized: synthFields,
+      preserved_original: preservedFields,
+      redacted: redactedFields
+    }
+  };
+}
+
+function toCSV(data) {
+  if (!data.length) return '';
+  const meta = getSyntheticMeta();
+  const commentLines = [
+    '# ══════════════════════════════════════════════════════════════════════',
+    '# SYNTHETIC DATA NOTICE',
+    '# ' + meta._notice,
+    '# Classification: ' + meta._data_classification,
+    '# Generated: ' + meta._generated_at,
+    '# Generator: ' + meta._generator,
+    '# Seed: ' + meta._seed,
+    '# Original records: ' + meta._original_record_count + ' | Output records: ' + meta._output_record_count,
+    '# Synthesized fields: ' + meta._field_treatment.synthesized.join(', '),
+    '# Preserved fields: ' + meta._field_treatment.preserved_original.join(', '),
+    '# Redacted fields: ' + (meta._field_treatment.redacted.length ? meta._field_treatment.redacted.join(', ') : 'none'),
+    '# ══════════════════════════════════════════════════════════════════════',
+    ''
+  ];
+  const headers = Object.keys(data[0]);
+  const lines = [headers.join(',')];
+  data.forEach(row => {
+    lines.push(headers.map(h => {
+      const v = String(row[h] ?? '');
+      return v.includes(',') || v.includes('"') ? '"'+v.replace(/"/g,'""')+'"' : v;
+    }).join(','));
+  });
+  return commentLines.join('\n') + lines.join('\n');
+}
+
+function toJSON(data) {
+  const envelope = {
+    _synthetic_data_notice: getSyntheticMeta(),
+    records: data
+  };
+  return JSON.stringify(envelope, null, 2);
+}
+
+// ═══════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════
+function $(id) { return document.getElementById(id); }
+function escapeHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function renderSteps() {
+  const el = $('stepIndicator');
+  const stepIdx = STEPS.indexOf(currentStep);
+  el.innerHTML = STEPS.map((s,i) => {
+    const dotClass = i === stepIdx ? 'active' : i < stepIdx ? 'done' : '';
+    const labelClass = i === stepIdx ? 'active' : '';
+    const sep = i < 3 ? '<div class="step-sep"></div>' : '';
+    return `<div class="step-item"><div class="step-dot ${dotClass}"></div><span class="step-label ${labelClass}">${s}</span>${sep}</div>`;
+  }).join('');
+}
+
+function goToStep(step) {
+  ['stepInput','stepConfigure','stepWashing','stepOutput'].forEach(id => $(id).classList.add('hidden'));
+  currentStep = step;
+  renderSteps();
+  if (step === 'input') $('stepInput').classList.remove('hidden');
+  if (step === 'configure') { $('stepConfigure').classList.remove('hidden'); renderConfigure(); }
+  if (step === 'washing') $('stepWashing').classList.remove('hidden');
+  if (step === 'output') { $('stepOutput').classList.remove('hidden'); renderOutput(); }
+}
+
+function setInputFormat(fmt) {
+  inputFormat = fmt;
+  document.querySelectorAll('.fmt-btn[data-fmt]').forEach(b => b.classList.toggle('active', b.dataset.fmt === fmt));
+  if (fmt !== 'xlsx') {
+    xlsxParsedData = null;
+    $('inputArea').disabled = false;
+    $('inputArea').style.opacity = '1';
+    $('inputArea').placeholder = fmt === 'json'
+      ? '[\n  { "name": "...", "email": "..." },\n  ...\n]'
+      : 'name,email,phone\nAlice,alice@co.com,555-1234';
+  } else {
+    $('inputArea').placeholder = 'Upload an .xlsx file using the upload button above';
+    if (!xlsxParsedData) {
+      $('inputArea').value = '';
+      $('inputArea').disabled = false;
+      $('inputArea').style.opacity = '1';
+    }
+  }
+}
+
+function setOutputFormat(fmt) {
+  outputFormat = fmt;
+  document.querySelectorAll('.fmt-btn-lg[data-outfmt]').forEach(b => b.classList.toggle('active', b.dataset.outfmt === fmt));
+}
+
+function loadSample() {
+  $('inputArea').value = inputFormat === 'json' ? SAMPLE_JSON : SAMPLE_CSV;
+}
+
+function handleFileUpload(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const name = file.name.toLowerCase();
+
+  if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+    setInputFormat('xlsx');
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = new Uint8Array(ev.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+        if (!json.length) throw new Error('No data rows found in spreadsheet');
+        xlsxParsedData = json;
+        $('inputArea').value = '[ XLSX loaded: ' + json.length + ' rows × ' + Object.keys(json[0]).length + ' columns from "' + workbook.SheetNames[0] + '" ]';
+        $('inputArea').disabled = true;
+        $('inputArea').style.opacity = '0.6';
+      } catch(err) {
+        $('errorBox').textContent = 'Failed to read XLSX: ' + (err.message || err);
+        $('errorBox').classList.remove('hidden');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    xlsxParsedData = null;
+    $('inputArea').disabled = false;
+    $('inputArea').style.opacity = '1';
+    const reader = new FileReader();
+    reader.onload = ev => {
+      $('inputArea').value = ev.target.result;
+      if (name.endsWith('.csv')) setInputFormat('csv');
+      else setInputFormat('json');
+    };
+    reader.readAsText(file);
+  }
+}
+
+// ═══════════════════════════════════════════
+// PARSE
+// ═══════════════════════════════════════════
+function handleParse() {
+  $('errorBox').classList.add('hidden');
+  try {
+    let data;
+    if (inputFormat === 'xlsx' && xlsxParsedData) {
+      data = xlsxParsedData;
+    } else {
+      const raw = $('inputArea').value.trim();
+      if (!raw) return;
+      if (inputFormat === 'json') { data = JSON.parse(raw); if (!Array.isArray(data)) data = [data]; }
+      else data = parseCSV(raw);
+    }
+    if (!data.length) throw new Error('No data rows found');
+    parsedData = data;
+    fields = {};
+    Object.keys(data[0]).forEach(key => {
+      const lk = key.toLowerCase();
+      let mode = 'synthesize';
+      if (['id','department','category','type','status','role','gender','country'].some(k => lk === k || lk.endsWith('_'+k))) mode = 'preserve';
+      fields[key] = { mode };
+    });
+    goToStep('configure');
+  } catch(e) {
+    $('errorBox').textContent = e.message || 'Failed to parse data';
+    $('errorBox').classList.remove('hidden');
+  }
+}
+
+// ═══════════════════════════════════════════
+// CONFIGURE RENDER
+// ═══════════════════════════════════════════
+function renderConfigure() {
+  if (!parsedData) return;
+  const counts = { synthesize:0, preserve:0, redact:0 };
+  Object.values(fields).forEach(f => counts[f.mode]++);
+  const stats = [
+    { label:'Records', value: parsedData.length },
+    { label:'Fields', value: Object.keys(parsedData[0]).length },
+    { label:'Synthesized', value: counts.synthesize },
+    { label:'Preserved', value: counts.preserve },
+    { label:'Redacted', value: counts.redact },
+  ];
+  $('statsBar').innerHTML = stats.map(s => `<div class="stat-box"><div class="stat-val">${s.value}</div><div class="stat-label">${s.label}</div></div>`).join('');
+
+  // Update multiplier display
+  const sel = $('rowMultiplier');
+  [...sel.options].forEach(o => { o.text = o.value + 'x (' + (parsedData.length * Number(o.value)) + ' rows)'; });
+
+  renderFields();
+}
+
+function renderFields() {
+  const wrap = $('fieldsWrap');
+  const colors = {
+    synthesize: { bg:'var(--synth-bg)', border:'var(--synth-border)', text:'var(--synth-text)' },
+    preserve: { bg:'var(--preserve-bg)', border:'var(--preserve-border)', text:'var(--preserve-text)' },
+    redact: { bg:'var(--redact-bg)', border:'var(--redact-border)', text:'var(--redact-text)' },
+  };
+  wrap.innerHTML = Object.entries(fields).map(([field, config], i) => {
+    const c = colors[config.mode];
+    return `<div class="field-pill" style="background:${c.bg};border:1px solid ${c.border};animation-delay:${i*0.05}s">
+      <span class="name" style="color:${c.text}">${escapeHtml(field)}</span>
+      <select onchange="updateField('${escapeHtml(field)}', this.value)">
+        ${['synthesize','preserve','redact'].map(m => `<option value="${m}" ${m===config.mode?'selected':''}>${m}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+}
+
+function updateField(field, mode) {
+  fields[field] = { mode };
+  renderConfigure();
+}
+
+// ═══════════════════════════════════════════
+// WASH
+// ═══════════════════════════════════════════
+function handleWash() {
+  if (!parsedData) return;
+  goToStep('washing');
+  let progress = 0;
+  const total = 20;
+  const interval = setInterval(() => {
+    progress++;
+    const pct = (progress / total) * 100;
+    $('washPct').textContent = Math.round(pct) + '%';
+    $('washBar').style.width = pct + '%';
+    if (progress >= total) {
+      clearInterval(interval);
+      const seed = Number($('seedInput').value) || 42;
+      const mult = Number($('rowMultiplier').value) || 1;
+      const pFmt = $('preserveFormat').checked;
+      const pDist = $('preserveDistribution').checked;
+      const rng = mulberry32(seed);
+      const result = [];
+      for (let m = 0; m < mult; m++) {
+        for (const row of parsedData) {
+          const newRow = { _synthetic_record: true };
+          for (const [field, value] of Object.entries(row)) {
+            const cfg = fields[field] || { mode:'synthesize' };
+            if (cfg.mode === 'preserve') newRow[field] = value;
+            else if (cfg.mode === 'redact') newRow[field] = '[REDACTED]';
+            else newRow[field] = generateSyntheticValue(value, field, rng, pFmt, pDist);
+          }
+          result.push(newRow);
+        }
+      }
+      syntheticData = result;
+      goToStep('output');
+    }
+  }, 80);
+}
+
+// ═══════════════════════════════════════════
+// OUTPUT RENDER
+// ═══════════════════════════════════════════
+function renderOutput() {
+  if (!syntheticData || !syntheticData.length) return;
+  const synthCount = Object.values(fields).filter(f=>f.mode==='synthesize').length;
+  const redactCount = Object.values(fields).filter(f=>f.mode==='redact').length;
+  $('successDetail').textContent = `${syntheticData.length} synthetic records generated · ${synthCount} fields synthesized · ${redactCount} fields redacted`;
+  $('downloadBtn').textContent = 'download .' + outputFormat;
+  $('rawLabel').textContent = 'Raw ' + (outputFormat === 'xlsx' ? 'preview (CSV)' : outputFormat.toUpperCase()) + ' output';
+
+  // Table
+  const headers = Object.keys(syntheticData[0]);
+  let html = '<thead><tr>';
+  headers.forEach(h => {
+    if (h === '_synthetic_record') {
+      html += `<th style="color:#fbbf24;background:rgba(0,0,0,0.2);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:500;white-space:nowrap;font-size:11px">${escapeHtml(h)}</th>`;
+    } else {
+      const mode = fields[h]?.mode || 'synthesize';
+      const cls = mode === 'redact' ? 'col-redact' : mode === 'preserve' ? 'col-preserve' : 'col-synth';
+      html += `<th class="${cls}">${escapeHtml(h)}</th>`;
+    }
+  });
+  html += '</tr></thead><tbody>';
+  syntheticData.slice(0, 10).forEach(row => {
+    html += '<tr>';
+    headers.forEach(h => {
+      if (h === '_synthetic_record') {
+        html += `<td style="padding:8px 14px;white-space:nowrap;color:#fbbf24;font-size:11px;border-bottom:1px solid var(--border)">true</td>`;
+      } else {
+        const mode = fields[h]?.mode || 'synthesize';
+        const cls = mode === 'redact' ? 'cell-redact' : '';
+        html += `<td class="${cls}">${escapeHtml(String(row[h]))}</td>`;
+      }
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  $('previewTable').innerHTML = html;
+
+  // Raw output
+  const preview = syntheticData.slice(0, 20);
+  let raw = outputFormat === 'json' ? toJSON(preview) : toCSV(preview);
+  if (outputFormat === 'xlsx') raw = '(Preview shown as CSV — download for full .xlsx with metadata sheet)\n\n' + raw;
+  if (syntheticData.length > 20) raw += '\n\n... and ' + (syntheticData.length - 20) + ' more rows (download for full data)';
+  $('rawOutput').textContent = raw;
+}
+
+// ═══════════════════════════════════════════
+// DOWNLOAD / COPY
+// ═══════════════════════════════════════════
+function handleDownload() {
+  if (!syntheticData) return;
+
+  if (outputFormat === 'xlsx') {
+    const wb = XLSX.utils.book_new();
+
+    // Metadata sheet
+    const meta = getSyntheticMeta();
+    const metaRows = [
+      ['SYNTHETIC DATA NOTICE'],
+      [''],
+      ['Notice', meta._notice],
+      ['Classification', meta._data_classification],
+      ['Generated At', meta._generated_at],
+      ['Generator', meta._generator],
+      ['Seed', meta._seed],
+      ['Original Record Count', meta._original_record_count],
+      ['Output Record Count', meta._output_record_count],
+      [''],
+      ['FIELD TREATMENT'],
+      ['Synthesized Fields', meta._field_treatment.synthesized.join(', ')],
+      ['Preserved Fields', meta._field_treatment.preserved_original.join(', ')],
+      ['Redacted Fields', meta._field_treatment.redacted.length ? meta._field_treatment.redacted.join(', ') : 'none'],
+    ];
+    const metaWs = XLSX.utils.aoa_to_sheet(metaRows);
+    // Style: widen columns
+    metaWs['!cols'] = [{ wch: 24 }, { wch: 100 }];
+    XLSX.utils.book_append_sheet(wb, metaWs, '_SYNTHETIC_NOTICE');
+
+    // Data sheet
+    const dataWs = XLSX.utils.json_to_sheet(syntheticData);
+    // Auto-width columns
+    const headers = Object.keys(syntheticData[0]);
+    dataWs['!cols'] = headers.map(h => ({
+      wch: Math.max(h.length, ...syntheticData.slice(0, 50).map(r => String(r[h] ?? '').length)) + 2
+    }));
+    XLSX.utils.book_append_sheet(wb, dataWs, 'Synthetic Data');
+
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'synthetic_data.xlsx'; a.click();
+    URL.revokeObjectURL(url);
+  } else {
+    const content = outputFormat === 'json' ? toJSON(syntheticData) : toCSV(syntheticData);
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'synthetic_data.' + outputFormat; a.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+function handleCopy() {
+  if (!syntheticData) return;
+  const content = outputFormat === 'json' ? toJSON(syntheticData) : toCSV(syntheticData);
+  navigator.clipboard?.writeText(content);
+}
+
+function resetAll() {
+  $('inputArea').value = '';
+  $('inputArea').disabled = false;
+  $('inputArea').style.opacity = '1';
+  parsedData = null; xlsxParsedData = null; fields = {}; syntheticData = null;
+  goToStep('input');
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+renderSteps();
+</script>
+</body>
+</html>

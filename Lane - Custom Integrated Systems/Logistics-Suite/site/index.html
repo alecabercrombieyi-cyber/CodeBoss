@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logistics Suite — Built by brokers, for brokers</title>
+<meta name="description" content="Basic applicable tools with sweet results. Integrated. Simple. Controlled. Efficient.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23faf7f2'/%3E%3Ccircle cx='16' cy='13' r='8' fill='%23e8b4c8'/%3E%3Cpath d='M12 13a4 4 0 0 1 8 0' fill='none' stroke='%23c9a0d9' stroke-width='1.5'/%3E%3Crect x='15' y='20' width='2' height='8' rx='1' fill='%23d4c0a8'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
+<script src="supabase.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf7f2;--surface:#fff;--surface-2:#f7f3ee;--border:#e8e2d9;--border-2:#d9d1c5;
+  --text:#2d2a26;--text-2:#4a4640;--text-3:#7a756d;--text-4:#a8a29d;
+  --pink:#d4738c;--pink-soft:#e8b4c8;--pink-bg:#fdf2f6;--pink-border:#f0d0dc;
+  --purple:#9b7bb8;--purple-soft:#c9a0d9;--purple-bg:#f5f0fa;--purple-border:#ddd0e8;
+  --green:#22a06b;--green-bg:#e6f7ef;--green-border:#b7e4cf;
+  --shadow-1:0 1px 3px rgba(45,42,38,.04);--shadow-2:0 4px 14px rgba(45,42,38,.05);--shadow-3:0 12px 32px rgba(45,42,38,.07);
+  --radius:14px;--font:'DM Sans',-apple-system,sans-serif;
+  --slide:cubic-bezier(.2,.8,.3,1);
+}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{min-height:100vh;overflow-x:hidden;position:relative}
+
+#candyCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.55}
+
+.header{background:rgba(250,247,242,.86);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.logo svg{width:34px;height:34px}
+.brand-name{font-size:16px;font-weight:700;letter-spacing:-.02em}
+.header-nav{display:flex;gap:24px;align-items:center}
+.header-nav a{color:var(--text-3);font-size:13px;font-weight:500;text-decoration:none;transition:color .15s}
+.header-nav a:hover{color:var(--text)}
+.btn{border:none;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:all .18s var(--slide);white-space:nowrap;text-decoration:none}
+.btn-pink{background:var(--pink);color:#fff}.btn-pink:hover{background:#c0607a;transform:translateY(-1px)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#1b8656}
+.btn-outline{background:var(--surface);border:1px solid var(--border);color:var(--text-2)}.btn-outline:hover{background:var(--surface-2);border-color:var(--border-2)}
+.btn-lg{padding:13px 24px;font-size:14px;border-radius:12px}
+.btn-ghost{background:none;border:none;color:var(--text-3);cursor:pointer;font-size:13px;font-weight:500;padding:6px 10px}.btn-ghost:hover{color:var(--text)}
+
+main{position:relative;z-index:1}
+
+/* HERO */
+.hero{max-width:1160px;margin:0 auto;padding:56px 28px 72px;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+.hero-left{opacity:0;transform:translateX(-40px);animation:slideInLeft .8s var(--slide) .1s forwards}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:var(--pink-bg);border:1px solid var(--pink-border);color:var(--pink);padding:6px 14px;border-radius:99px;font-size:12px;font-weight:600;margin-bottom:18px}
+.hero-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--pink)}
+.hero h1{font-size:52px;font-weight:800;letter-spacing:-.035em;line-height:1.03;margin-bottom:18px}
+.hero h1 .accent{color:var(--pink);font-style:italic;font-weight:700}
+.hero .lede{font-size:17px;color:var(--text-3);line-height:1.6;margin-bottom:10px;max-width:480px}
+.hero .values{font-size:13px;color:var(--purple);font-weight:600;margin-bottom:28px;letter-spacing:.02em}
+.hero-cta-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.hero-note{font-size:12px;color:var(--text-4)}
+
+.hero-right{opacity:0;transform:translateX(40px);animation:slideInRight .8s var(--slide) .25s forwards}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px;box-shadow:var(--shadow-3);position:relative;overflow:hidden}
+.auth-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--pink-soft),var(--purple-soft))}
+.auth-card h2{font-size:19px;font-weight:700;margin-bottom:4px;letter-spacing:-.02em}
+.auth-card .sub{font-size:13px;color:var(--text-3);margin-bottom:20px}
+.ff-banner{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green);padding:10px 14px;border-radius:10px;font-size:12px;font-weight:600;margin-bottom:14px;display:none;align-items:center;gap:8px}
+.ff-banner.show{display:flex;animation:slideInLeft .4s var(--slide)}
+.ff-banner .check{width:16px;height:16px;flex-shrink:0}
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:5px}
+.form-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;font-family:var(--font);color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s}
+.form-input:focus{border-color:var(--pink-soft);box-shadow:0 0 0 3px rgba(212,115,140,.1)}
+.auth-submit{width:100%;padding:13px;margin-top:6px}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:16px 0;font-size:11px;color:var(--text-4);font-weight:600;text-transform:uppercase;letter-spacing:.1em}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.btn-google{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text-2);padding:11px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .15s}
+.btn-google:hover{background:var(--surface-2);border-color:var(--border-2)}
+.btn-google svg{width:18px;height:18px}
+.auth-toggle{text-align:center;font-size:13px;color:var(--text-3);margin-top:14px}
+.auth-toggle a{color:var(--pink);cursor:pointer;font-weight:600}
+.auth-error{background:var(--pink-bg);border:1px solid var(--pink-border);color:var(--pink);padding:10px 14px;border-radius:10px;font-size:12px;font-weight:500;margin-top:12px;display:none}
+.auth-error.show{display:block}
+
+/* SECTIONS */
+section{padding:72px 28px;position:relative}
+.section-inner{max-width:1100px;margin:0 auto}
+.section-head{text-align:center;margin-bottom:44px}
+.section-kicker{font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.18em;margin-bottom:12px}
+.section-head h2{font-size:38px;font-weight:800;letter-spacing:-.03em;margin-bottom:12px}
+.section-head p{font-size:16px;color:var(--text-3);max-width:560px;margin:0 auto;line-height:1.6}
+
+/* TOOL SHOWCASE */
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.tool-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow-1);position:relative;overflow:hidden;transition:all .28s var(--slide);opacity:0;transform:translateX(-30px)}
+.tool-card.in{opacity:1;transform:translateX(0)}
+.tool-card:nth-child(even){transform:translateX(30px)}
+.tool-card:nth-child(even).in{transform:translateX(0)}
+.tool-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--pink-soft),var(--purple-soft))}
+.tool-card:hover{transform:translateX(6px);box-shadow:var(--shadow-3);border-color:var(--pink-border)}
+.tool-card .icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px;background:linear-gradient(135deg,var(--pink-bg),var(--purple-bg));border:1px solid var(--pink-border)}
+.tool-card h3{font-size:16px;font-weight:700;margin-bottom:6px;letter-spacing:-.01em}
+.tool-card .cat{display:inline-block;font-size:10px;font-weight:700;color:var(--purple);background:var(--purple-bg);border:1px solid var(--purple-border);padding:2px 9px;border-radius:99px;margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em}
+.tool-card p{font-size:13px;color:var(--text-3);line-height:1.6}
+
+/* VALUES STRIP */
+.values-strip{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:36px 28px}
+.values-inner{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.value-item{text-align:center;opacity:0;transform:translateY(20px);animation:fadeUp .6s var(--slide) forwards}
+.value-item:nth-child(1){animation-delay:.1s}
+.value-item:nth-child(2){animation-delay:.2s}
+.value-item:nth-child(3){animation-delay:.3s}
+.value-item:nth-child(4){animation-delay:.4s}
+.value-item .w{font-size:15px;font-weight:800;color:var(--pink);letter-spacing:.02em;margin-bottom:4px}
+.value-item .d{font-size:12px;color:var(--text-3);line-height:1.5}
+
+/* PRICING */
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;max-width:980px;margin:0 auto}
+.price-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:32px 28px;position:relative;transition:all .3s var(--slide);opacity:0;transform:translateX(-30px)}
+.price-card.in{opacity:1;transform:translateX(0)}
+.price-card:nth-child(2){transform:translateY(30px)}.price-card:nth-child(2).in{transform:translateY(0)}
+.price-card:nth-child(3){transform:translateX(30px)}.price-card:nth-child(3).in{transform:translateX(0)}
+.price-card.featured{border-color:var(--pink-border);box-shadow:var(--shadow-3)}
+.price-card.featured::before{content:'Most Popular';position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--pink);color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:99px;text-transform:uppercase;letter-spacing:.08em}
+.price-cat{font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.price-card h3{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
+.price-card .tagline{font-size:13px;color:var(--text-3);margin-bottom:18px;line-height:1.5;min-height:40px}
+.price-amount{display:flex;align-items:baseline;gap:4px;margin-bottom:4px}
+.price-amount .num{font-size:40px;font-weight:800;letter-spacing:-.03em}
+.price-amount .unit{font-size:14px;color:var(--text-3);font-weight:500}
+.price-note{font-size:12px;color:var(--text-4);margin-bottom:20px}
+.price-features{list-style:none;margin-bottom:24px}
+.price-features li{font-size:13px;color:var(--text-2);padding:7px 0;display:flex;align-items:center;gap:8px}
+.price-features li::before{content:'';width:14px;height:14px;border-radius:50%;background:var(--pink-bg);border:1px solid var(--pink-border);flex-shrink:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 7l3 3 5-6' fill='none' stroke='%23d4738c' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-size:contain}
+.price-btn{display:block;width:100%;padding:12px;border-radius:10px;text-align:center;font-size:13px;font-weight:700;text-decoration:none;transition:all .15s;cursor:pointer;border:none;font-family:var(--font)}
+.price-btn.primary{background:var(--pink);color:#fff}.price-btn.primary:hover{background:#c0607a}
+.price-btn.secondary{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border)}.price-btn.secondary:hover{background:var(--bg);border-color:var(--border-2)}
+
+/* FOOTER */
+footer{padding:48px 28px 32px;text-align:center;border-top:1px solid var(--border);background:var(--surface-2);position:relative;z-index:1}
+footer p{font-size:12px;color:var(--text-4);line-height:1.8}
+footer .tag{font-size:13px;color:var(--text-3);font-weight:600;margin-bottom:6px}
+
+/* ANIMATIONS */
+@keyframes slideInLeft{to{opacity:1;transform:translateX(0)}}
+@keyframes slideInRight{to{opacity:1;transform:translateX(0)}}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;gap:36px;padding:40px 24px 56px}
+  .hero h1{font-size:38px}
+  .values-inner{grid-template-columns:repeat(2,1fr)}
+  section{padding:52px 20px}
+  .section-head h2{font-size:30px}
+  .header-nav{display:none}
+}
+@media(max-width:480px){
+  .hero h1{font-size:32px}
+  .values-inner{grid-template-columns:1fr}
+}
+
+#loadingGate{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+#loadingGate.hidden{display:none}
+#loadingGate svg{width:56px;height:56px;animation:wobble 1.6s var(--slide) infinite}
+#loadingGate p{font-size:13px;color:var(--text-3);font-weight:500}
+@keyframes wobble{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+</style>
+</head>
+<body>
+
+<div id="loadingGate">
+  <svg viewBox="0 0 56 56" fill="none"><circle cx="28" cy="22" r="16" fill="#e8b4c8"/><path d="M16 18c3-5 8-8 15-6" stroke="#c9a0d9" stroke-width="2.5" stroke-linecap="round" opacity=".7"/><rect x="26" y="37" width="4" height="14" rx="2" fill="#d4c0a8"/></svg>
+  <p>Loading…</p>
+</div>
+
+<canvas id="candyCanvas"></canvas>
+
+<header class="header">
+  <a class="brand" href="#top">
+    <div class="logo"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="13" r="9" fill="#e8b4c8"/><path d="M10 10c1.5-2.5 4.5-4.5 8-3.5" stroke="#c9a0d9" stroke-width="1.8" stroke-linecap="round" opacity=".7"/><path d="M11.5 15c1.5-2.5 4-3.5 6.5-3" stroke="#f2d0de" stroke-width="1.5" stroke-linecap="round" opacity=".6"/><rect x="15" y="21" width="2.2" height="8" rx="1.1" fill="#d4c0a8"/></svg></div>
+    <span class="brand-name">Logistics Suite</span>
+  </a>
+  <nav class="header-nav">
+    <a href="#tools">Tools</a>
+    <a href="#pricing">Pricing</a>
+    <a href="about.html">About</a>
+    <a href="#signin">Sign in</a>
+  </nav>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-tag"><span class="dot"></span> Built by brokers, for brokers</div>
+    <h1>Basic applicable tools<br>with <span class="accent">sweet results.</span></h1>
+    <p class="lede">Load management, freight matching, carrier intelligence, and more — all in one place. No setup, no ceremony.</p>
+    <p class="values">Integrated · Simple · Controlled · Efficient</p>
+    <div class="hero-cta-row">
+      <a href="#signin" class="btn btn-pink btn-lg">Get Started Free →</a>
+      <a href="#tools" class="btn btn-outline btn-lg">See the tools</a>
+    </div>
+    <p class="hero-note">No credit card. Free for your whole team.</p>
+  </div>
+
+  <div class="hero-right" id="signin">
+    <div class="auth-card">
+      <h2 id="authHeading">Create your account</h2>
+      <p class="sub" id="authSub">Free suite access. CLIS available on upgrade.</p>
+
+      <div class="ff-banner" id="ffBanner">
+        <svg class="check" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        Company account detected — free access to core tools.
+      </div>
+
+      <div class="form-group" id="nameGroup">
+        <label class="form-label">Display Name</label>
+        <input class="form-input" id="authName" placeholder="Your name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="authEmail" type="email" placeholder="you@company.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="authPass" type="password" placeholder="At least 6 characters" autocomplete="current-password">
+      </div>
+      <button class="btn btn-pink auth-submit" id="authBtn">Sign Up</button>
+
+      <div class="auth-error" id="authError"></div>
+
+      <div class="auth-divider">or</div>
+
+      <button class="btn-google" id="googleBtn">
+        <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5h-1.9V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.3 0 10-2 13.6-5.3l-6.3-5.2c-2 1.5-4.6 2.5-7.3 2.5-5.2 0-9.6-3.3-11.2-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.3 5.2c-.4.4 6.7-4.9 6.7-15 0-1.2-.1-2.3-.4-3.4z"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="auth-toggle">
+        <span id="authToggleText">Already have an account?</span>
+        <a id="authToggleLink">Sign in</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="values-strip">
+  <div class="values-inner">
+    <div class="value-item"><div class="w">INTEGRATED</div><div class="d">Every tool shares context</div></div>
+    <div class="value-item"><div class="w">SIMPLE</div><div class="d">No manuals, no setup</div></div>
+    <div class="value-item"><div class="w">CONTROLLED</div><div class="d">Your data, your account</div></div>
+    <div class="value-item"><div class="w">EFFICIENT</div><div class="d">Minutes, not hours</div></div>
+  </div>
+</div>
+
+<section id="tools">
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-kicker">The Toolkit</div>
+      <h2>Everything you need, in one suite.</h2>
+      <p>Core tools are free for every broker. CLIS is a premium intelligence layer.</p>
+    </div>
+    <div class="tool-grid" id="toolGrid"></div>
+  </div>
+</section>
+
+<section id="pricing" style="background:var(--surface-2)">
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-kicker">Pricing</div>
+      <h2>Free for the suite. Pay only for CLIS.</h2>
+      <p>Load Manager, Freight Matcher, Data Wash, Bolt Post, Mass Post and Pillar — all free. Forever.</p>
+    </div>
+    <div class="pricing-grid">
+
+      <div class="price-card">
+        <div class="price-cat">Logistics Suite</div>
+        <h3>Core Tools</h3>
+        <div class="tagline">The full toolkit for day-to-day freight operations.</div>
+        <div class="price-amount"><span class="num">$0</span><span class="unit">/ forever</span></div>
+        <div class="price-note">For all brokers, on any team.</div>
+        <ul class="price-features">
+          <li>Load Manager</li>
+          <li>Freight Matcher</li>
+          <li>Bolt Post & Mass Post</li>
+          <li>Data Wash</li>
+          <li>Pillar — carrier analytics</li>
+          <li>Reviews & team activity</li>
+        </ul>
+        <a href="#signin" class="price-btn secondary">Sign up free</a>
+      </div>
+
+      <div class="price-card featured">
+        <div class="price-cat">CLIS</div>
+        <h3>CLIS Full</h3>
+        <div class="tagline">Carrier Lane Intelligence System — unlimited.</div>
+        <div class="price-amount"><span class="num">$290</span><span class="unit">/ month</span></div>
+        <div class="price-note">Unlimited lookups. Full analytics.</div>
+        <ul class="price-features">
+          <li>Unlimited CLIS queries</li>
+          <li>Full lane intelligence</li>
+          <li>Carrier scoring</li>
+          <li>Priority processing</li>
+          <li>All core tools included</li>
+        </ul>
+        <a href="https://buy.stripe.com/28EdR87TL6sSdP3evz4Ni00" target="_blank" class="price-btn primary">Subscribe — CLIS Full</a>
+      </div>
+
+      <div class="price-card">
+        <div class="price-cat">CLIS</div>
+        <h3>CLIS Starter</h3>
+        <div class="tagline">Try CLIS with a daily usage cap.</div>
+        <div class="price-amount"><span class="num">$50</span><span class="unit">/ month</span></div>
+        <div class="price-note">8 lookups per day.</div>
+        <ul class="price-features">
+          <li>8 CLIS queries per day</li>
+          <li>Lane intelligence</li>
+          <li>Carrier scoring</li>
+          <li>All core tools included</li>
+        </ul>
+        <a href="https://buy.stripe.com/eVq6oG8XPeZocKZ1IN4Ni02" target="_blank" class="price-btn secondary">Subscribe — Starter</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p class="tag">Built by brokers, for brokers.</p>
+  <p>Integrated · Simple · Controlled · Efficient</p>
+  <p style="margin-top:12px">&copy; Logistics Suite</p>
+</footer>
+
+<script>
+const SB_URL='https://fzuppxczifdmoqtctdlg.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6dXBweGN6aWZkbW9xdGN0ZGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzU2NzUsImV4cCI6MjA5MDE1MTY3NX0.nHmv_3nMJdHXGj6P0sQPrcE1npBqyCw-XgZTYFq5IBo';
+const APP_URL='app.html';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+// ─── Auto-redirect if session exists ───
+(async()=>{
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(session){location.replace(APP_URL);return}
+  }catch(e){}
+  document.getElementById('loadingGate').classList.add('hidden');
+})();
+
+// ─── Tool showcase ───
+const TOOLS=[
+  {icon:'🚛',cat:'Operations',name:'Load Manager',desc:'Track, update, and manage every load from pickup to delivery.'},
+  {icon:'🎯',cat:'Matching',name:'Freight Matcher',desc:'Match your available freight to the right carriers in seconds.'},
+  {icon:'⚡',cat:'Posting',name:'Bolt Post',desc:'Post a load to load boards in one click.'},
+  {icon:'📡',cat:'Posting',name:'Mass Post',desc:'Bulk-post loads across channels with a single action.'},
+  {icon:'🧼',cat:'Data',name:'Data Wash',desc:'Generate clean test and synthetic freight data on demand.'},
+  {icon:'🏛️',cat:'Intelligence',name:'Pillar',desc:'Carrier intelligence and due diligence at a glance.'},
+  {icon:'💎',cat:'Premium',name:'CLIS',desc:'Carrier Lane Intelligence System — premium lane & carrier insights.'}
+];
+(()=>{
+  const g=document.getElementById('toolGrid');
+  g.innerHTML=TOOLS.map(t=>`<div class="tool-card"><div class="icon">${t.icon}</div><div class="cat">${t.cat}</div><h3>${t.name}</h3><p>${t.desc}</p></div>`).join('');
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.15});
+  document.querySelectorAll('.tool-card,.price-card').forEach(el=>io.observe(el));
+})();
+
+// ─── Auth flow ───
+let authMode='signup';
+const $=id=>document.getElementById(id);
+
+function setMode(m){
+  authMode=m;
+  $('authBtn').textContent=m==='signup'?'Sign Up':'Sign In';
+  $('authHeading').textContent=m==='signup'?'Create your account':'Welcome back';
+  $('authSub').textContent=m==='signup'?'Free suite access. CLIS available on upgrade.':'Sign in to open your suite.';
+  $('authToggleText').textContent=m==='signup'?'Already have an account?':'Need an account?';
+  $('authToggleLink').textContent=m==='signup'?'Sign in':'Sign up';
+  $('nameGroup').style.display=m==='signup'?'':'none';
+  $('authError').classList.remove('show');
+  applyCompanyStyling();
+}
+$('authToggleLink').addEventListener('click',()=>setMode(authMode==='signup'?'signin':'signup'));
+
+function isCompanyEmail(email){return /@bayandbay\.com$/i.test((email||'').trim())}
+function applyCompanyStyling(){
+  const email=$('authEmail').value;
+  const isCo=isCompanyEmail(email);
+  $('ffBanner').classList.toggle('show',isCo);
+  const btn=$('authBtn');
+  if(authMode==='signup'){
+    if(isCo){btn.textContent='Sign Up — Free';btn.classList.remove('btn-pink');btn.classList.add('btn-green')}
+    else{btn.textContent='Sign Up';btn.classList.add('btn-pink');btn.classList.remove('btn-green')}
+  }
+}
+$('authEmail').addEventListener('input',applyCompanyStyling);
+
+function showError(msg){const e=$('authError');e.textContent=msg;e.classList.add('show')}
+
+$('authBtn').addEventListener('click',async()=>{
+  const email=$('authEmail').value.trim();
+  const pass=$('authPass').value;
+  const name=$('authName').value.trim();
+  $('authError').classList.remove('show');
+  if(!email||!pass)return showError('Email and password are required.');
+  if(authMode==='signup'&&!name)return showError('Please enter a display name.');
+  const isCo=isCompanyEmail(email);
+  try{
+    const btn=$('authBtn');btn.disabled=true;const origText=btn.textContent;btn.textContent='…';
+    let res;
+    if(authMode==='signup'){
+      res=await sb.auth.signUp({email,password:pass,options:{data:{display_name:name,tier:isCo?'free':'free'}}});
+    }else{
+      res=await sb.auth.signInWithPassword({email,password:pass});
+    }
+    btn.disabled=false;btn.textContent=origText;
+    if(res.error)return showError(res.error.message);
+    const{data:{session}}=await sb.auth.getSession();
+    if(session)location.replace(APP_URL);
+    else showError('Check your email to confirm, then sign in.');
+  }catch(e){showError(e.message||'Something went wrong.')}
+});
+
+$('googleBtn').addEventListener('click',async()=>{
+  $('authError').classList.remove('show');
+  try{
+    const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+'/app.html'}});
+    if(error)showError(error.message);
+  }catch(e){showError(e.message||'Google sign-in failed.')}
+});
+
+// Enter key submits
+['authName','authEmail','authPass'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('authBtn').click()}}));
+
+// ─── Candy canvas animation ───
+(()=>{
+  const c=document.getElementById('candyCanvas'),ctx=c.getContext('2d');
+  let w,h,items=[];
+  function resize(){w=c.width=innerWidth*devicePixelRatio;h=c.height=innerHeight*devicePixelRatio;ctx.scale(1,1)}
+  resize();addEventListener('resize',resize);
+  const TYPES=['lolli','sparkle','heart','bubble'];
+  function mk(){
+    const type=TYPES[Math.floor(Math.random()*TYPES.length)];
+    return{type,x:Math.random()*w,y:Math.random()*h,r:(8+Math.random()*22)*devicePixelRatio,vx:(Math.random()-.5)*.3*devicePixelRatio,vy:(-.2-Math.random()*.5)*devicePixelRatio,rot:Math.random()*Math.PI*2,vr:(Math.random()-.5)*.01,hue:Math.random()<.5?'#e8b4c8':'#c9a0d9',alpha:.15+Math.random()*.25}
+  }
+  for(let i=0;i<38;i++)items.push(mk());
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    items.forEach(it=>{
+      it.x+=it.vx;it.y+=it.vy;it.rot+=it.vr;
+      if(it.y<-40)it.y=h+40;if(it.x<-40)it.x=w+40;if(it.x>w+40)it.x=-40;
+      ctx.save();ctx.translate(it.x,it.y);ctx.rotate(it.rot);ctx.globalAlpha=it.alpha;
+      if(it.type==='lolli'){
+        ctx.fillStyle=it.hue;ctx.beginPath();ctx.arc(0,0,it.r,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle='#c9a0d9';ctx.lineWidth=it.r*.18;ctx.beginPath();ctx.arc(0,0,it.r*.55,.3,Math.PI+.3);ctx.stroke();
+        ctx.strokeStyle='#d4c0a8';ctx.lineWidth=it.r*.25;ctx.beginPath();ctx.moveTo(0,it.r);ctx.lineTo(0,it.r*2.8);ctx.stroke();
+      }else if(it.type==='sparkle'){
+        ctx.fillStyle=it.hue;
+        for(let k=0;k<4;k++){ctx.rotate(Math.PI/2);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(it.r*.3,it.r*.3);ctx.lineTo(0,it.r);ctx.lineTo(-it.r*.3,it.r*.3);ctx.closePath();ctx.fill()}
+      }else if(it.type==='heart'){
+        ctx.fillStyle=it.hue;const s=it.r*.06;ctx.beginPath();
+        ctx.moveTo(0,it.r*.3);
+        ctx.bezierCurveTo(-it.r,-it.r*.4,-it.r*1.1,it.r*.2,0,it.r);
+        ctx.bezierCurveTo(it.r*1.1,it.r*.2,it.r,-it.r*.4,0,it.r*.3);
+        ctx.fill();
+      }else{
+        ctx.strokeStyle=it.hue;ctx.lineWidth=it.r*.08;ctx.beginPath();ctx.arc(0,0,it.r*.7,0,Math.PI*2);ctx.stroke();
+        ctx.fillStyle='#fff';ctx.globalAlpha=it.alpha*.4;ctx.beginPath();ctx.arc(-it.r*.25,-it.r*.25,it.r*.2,0,Math.PI*2);ctx.fill();
+      }
+      ctx.restore();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

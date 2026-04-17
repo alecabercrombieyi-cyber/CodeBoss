@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Freight Matcher</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <style>
+    :root{--flame:#ff4d4d;--flame2:#ff6b35;--ember:#ff8c42;--gold:#ffb347;
+      --dark:#0d0d0d;--dark2:#1a1a1a;--dark3:#252525;--dark4:#333;
+      --text:#fafafa;--text2:#b0b0b0;--text3:#666;--match-green:#00d4aa;--lane-cyan:#00bcd4}
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body,#root{height:100%;width:100%;overflow:hidden}
+    body{font-family:'DM Sans','Outfit',sans-serif;background:var(--dark);color:var(--text)}
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--dark2)}
+    ::-webkit-scrollbar-thumb{background:var(--dark4);border-radius:3px}
+    input,select,textarea{font-family:'DM Sans',sans-serif}
+    input:focus,select:focus,textarea:focus{border-color:var(--flame) !important;outline:none}
+    button{cursor:pointer;transition:all 0.2s}button:hover{transform:translateY(-1px)}button:active{transform:scale(0.98)}
+    @keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}.fadeUp{animation:fadeUp 0.4s ease}
+    @keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+    textarea::placeholder{color:#555}
+    .leaflet-container{background:var(--dark) !important}
+    .leaflet-control-zoom a{background:var(--dark2) !important;color:var(--text2) !important;border-color:var(--dark3) !important}
+    .leaflet-control-zoom a:hover{background:var(--dark3) !important;color:var(--flame) !important}
+    .leaflet-control-attribution{background:rgba(13,13,13,0.85) !important;color:#555 !important;font-size:9px !important}
+    .leaflet-control-attribution a{color:#555 !important}
+    .leaflet-popup-content-wrapper{background:var(--dark2) !important;color:var(--text) !important;border-radius:12px !important;border:1px solid var(--dark3) !important;box-shadow:0 8px 32px rgba(0,0,0,0.6) !important;font-family:'DM Sans',sans-serif !important}
+    .leaflet-popup-tip{background:var(--dark2) !important}
+    .leaflet-popup-content{margin:10px 14px !important;font-size:12px !important;line-height:1.5 !important}
+    @keyframes pulseRing{0%{transform:scale(1);opacity:0.6}100%{transform:scale(2.5);opacity:0}}
+    .pulse-ring{position:absolute;border-radius:50%;animation:pulseRing 1.5s ease-out infinite}
+    @keyframes fireFlicker{0%{transform:scale(1) translateY(0)}25%{transform:scale(1.1) translateY(-2px)}50%{transform:scale(0.95) translateY(0)}75%{transform:scale(1.08) translateY(-1px)}100%{transform:scale(1) translateY(0)}}
+    .fire-icon{animation:fireFlicker 0.8s ease-in-out infinite;filter:drop-shadow(0 0 6px rgba(255,77,77,0.7)) drop-shadow(0 0 12px rgba(255,107,53,0.4));pointer-events:none}
+    @keyframes fireGlowPulse{0%,100%{box-shadow:0 0 8px rgba(255,77,77,0.4),0 0 16px rgba(255,107,53,0.2)}50%{box-shadow:0 0 14px rgba(255,77,77,0.6),0 0 28px rgba(255,107,53,0.3)}}
+    @keyframes fireSplash{0%{transform:scale(0);opacity:1}50%{transform:scale(1);opacity:0.8}100%{transform:scale(1.5);opacity:0}}
+    .fire-splash{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,77,77,0.4) 0%,rgba(255,107,53,0.2) 50%,transparent 70%);animation:fireSplash 1s ease-out forwards;pointer-events:none;z-index:999}
+    /* Radius slider */
+    input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:var(--dark3);outline:none}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#ff4d4d,#ff6b35);cursor:pointer;box-shadow:0 0 10px rgba(255,77,77,0.4)}
+    input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#ff4d4d,#ff6b35);cursor:pointer;border:none}
+    /* Tutorial */
+    @keyframes cursorMove{0%{opacity:0}5%{opacity:1}95%{opacity:1}100%{opacity:0}}
+    @keyframes cursorClick{0%{transform:scale(1)}50%{transform:scale(0.8)}100%{transform:scale(1)}}
+    .tutorial-overlay{position:fixed;inset:0;z-index:10000;pointer-events:all}
+    .tutorial-highlight{position:absolute;border:2px solid #ff4d4d;border-radius:12px;box-shadow:0 0 0 4000px rgba(0,0,0,0.75),0 0 20px rgba(255,77,77,0.4);z-index:10001;pointer-events:none;transition:all 0.5s ease}
+    .tutorial-tooltip{position:absolute;z-index:10002;background:var(--dark2);border:1px solid var(--dark3);border-radius:14px;padding:18px 22px;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.5);pointer-events:all}
+    .tutorial-cursor{position:absolute;z-index:10003;pointer-events:none;transition:left 0.8s ease,top 0.8s ease;font-size:24px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))}
+    .toast{position:fixed;top:20px;right:20px;z-index:20000;padding:14px 22px;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:fadeUp 0.3s ease;max-width:400px}
+    .toast-success{background:linear-gradient(135deg,#00d4aa,#00b894)}
+    .toast-info{background:linear-gradient(135deg,#4da6ff,#3b82f6)}
+    .toast-error{background:linear-gradient(135deg,#ff4d4d,#ff6b35)}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect,useMemo,useCallback,useRef}=React;
+
+// ─── Toast Notifications ────────────────────────────────────────────
+function showToast(msg,type='success',duration=3000){
+  const el=document.createElement('div');el.className=`toast toast-${type}`;el.textContent=msg;
+  document.body.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity 0.3s';setTimeout(()=>el.remove(),300);},duration);
+}
+
+// ─── Session Persistence ────────────────────────────────────────────
+function saveSession(trucks,loads){
+  try{localStorage.setItem('fm_trucks',JSON.stringify(trucks));localStorage.setItem('fm_loads',JSON.stringify(loads));}catch(e){}
+}
+function loadSession(){
+  try{
+    const t=JSON.parse(localStorage.getItem('fm_trucks')||'[]');
+    const l=JSON.parse(localStorage.getItem('fm_loads')||'[]');
+    return{trucks:Array.isArray(t)?t:[],loads:Array.isArray(l)?l:[]};
+  }catch{return{trucks:[],loads:[]};}
+}
+
+// ─── CSV Export ─────────────────────────────────────────────────────
+function exportMatchesCSV(matches,trucks,loads){
+  const rows=[['Truck Location','Truck Equipment','Truck Carrier','Truck Available','Preferred Lane','Load Origin','Load Destination','Load Equipment','Load Weight','PU Date','PU Time','DEL Date','DEL Time','Distance (mi)','Lane Match']];
+  Object.entries(matches).forEach(([tid,tm])=>{
+    const truck=trucks.find(t=>t.id===tid);if(!truck)return;
+    const lane=(truck.preferred_destinations||[]).join(' / ');
+    tm.forEach(m=>{rows.push([truck.location,truck.equipment,truck.carrier||'',truck.available||'',lane,
+      m.load.origin,m.load.destination,m.load.equipment,m.load.weight||'',m.load.pickup_date||'',m.load.pickup_time||'',
+      m.load.delivery_date||'',m.load.delivery_time||'',m.distance,m.laneMatch?'Yes':'']);});
+  });
+  const csv=rows.map(r=>r.map(c=>'"'+(c+'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`freight-matches-${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  URL.revokeObjectURL(url);showToast(`Exported ${rows.length-1} matches to CSV`,'success');
+}
+
+const EQ_PRIMARY=["Van/Dry Van","Reefer","Van/Reefer","Trailer"];
+const EQ_MORE=["Flatbed","Step Deck","Straight Truck","Tanker"];
+const EQ_ALL=[...EQ_PRIMARY,...EQ_MORE];
+const RAD_MIN=10,RAD_MAX=500;
+const EC={"Flatbed":"#ff8c42","Van/Dry Van":"#4da6ff","Reefer":"#00d4aa","Step Deck":"#b388ff",
+  "Straight Truck":"#ff4d4d","Tanker":"#ff69b4","Van/Reefer":"#00d4aa","Trailer":"#4da6ff"};
+
+// ─── Cities ─────────────────────────────────────────────────────────
+const CC={"chicago, il":[41.878,-87.63],"dallas, tx":[32.777,-96.797],"houston, tx":[29.76,-95.37],"atlanta, ga":[33.749,-84.388],"los angeles, ca":[34.052,-118.244],"memphis, tn":[35.15,-90.049],"nashville, tn":[36.163,-86.782],"indianapolis, in":[39.768,-86.158],"columbus, oh":[39.961,-82.999],"detroit, mi":[42.331,-83.046],"minneapolis, mn":[44.978,-93.265],"st paul, mn":[44.954,-93.09],"saint paul, mn":[44.954,-93.09],"kansas city, mo":[39.1,-94.579],"st louis, mo":[38.627,-90.199],"milwaukee, wi":[43.039,-87.907],"denver, co":[39.739,-104.99],"phoenix, az":[33.448,-112.074],"san antonio, tx":[29.424,-98.494],"jacksonville, fl":[30.332,-81.656],"charlotte, nc":[35.227,-80.843],"san francisco, ca":[37.775,-122.419],"seattle, wa":[47.606,-122.332],"portland, or":[45.515,-122.678],"new york, ny":[40.713,-74.006],"philadelphia, pa":[39.953,-75.165],"miami, fl":[25.762,-80.192],"tampa, fl":[27.951,-82.457],"orlando, fl":[28.538,-81.379],"pittsburgh, pa":[40.441,-79.996],"cincinnati, oh":[39.103,-84.512],"cleveland, oh":[41.499,-81.694],"louisville, ky":[38.253,-85.759],"birmingham, al":[33.521,-86.803],"new orleans, la":[29.951,-90.072],"oklahoma city, ok":[35.468,-97.516],"raleigh, nc":[35.78,-78.638],"richmond, va":[37.541,-77.436],"baltimore, md":[39.29,-76.612],"washington, dc":[38.907,-77.037],"boston, ma":[42.36,-71.059],"salt lake city, ut":[40.761,-111.891],"las vegas, nv":[36.17,-115.14],"omaha, ne":[41.257,-95.935],"des moines, ia":[41.587,-93.625],"little rock, ar":[34.747,-92.29],"el paso, tx":[31.762,-106.485],"austin, tx":[30.267,-97.743],"fort worth, tx":[32.756,-97.331],"tucson, az":[32.223,-110.975],"sacramento, ca":[38.582,-121.494],"fresno, ca":[36.738,-119.787],"san diego, ca":[32.716,-117.161],"spokane, wa":[47.659,-117.426],"boise, id":[43.615,-116.202],"laredo, tx":[27.504,-99.508],"lubbock, tx":[33.578,-101.855],"amarillo, tx":[35.222,-101.831],"tulsa, ok":[36.154,-95.993],"wichita, ks":[37.687,-97.33],"savannah, ga":[32.081,-81.091],"charleston, sc":[32.777,-79.931],"norfolk, va":[36.851,-76.286],"albuquerque, nm":[35.084,-106.65],"knoxville, tn":[35.961,-83.921],"chattanooga, tn":[35.046,-85.31],"mobile, al":[30.695,-88.04],"jackson, ms":[32.299,-90.185],"shreveport, la":[32.525,-93.75],"corpus christi, tx":[27.801,-97.396],"midland, tx":[31.997,-102.078],"fargo, nd":[46.877,-96.79],"sioux falls, sd":[43.545,-96.731],"green bay, wi":[44.513,-88.013],"madison, wi":[43.073,-89.401],"grand rapids, mi":[42.963,-85.668],"harrisburg, pa":[40.273,-76.887],"albany, ny":[42.653,-73.756],"buffalo, ny":[42.886,-78.878],"syracuse, ny":[43.048,-76.147],"columbia, sc":[34.001,-81.035],"greenville, sc":[34.853,-82.394],"lexington, ky":[38.041,-84.504],"evansville, in":[37.972,-87.571],"fort wayne, in":[41.079,-85.139],"dayton, oh":[39.759,-84.192],"toledo, oh":[41.653,-83.538],"akron, oh":[41.081,-81.519],"rockford, il":[42.271,-89.094],"south bend, in":[41.676,-86.252],"waco, tx":[31.549,-97.146],"beaumont, tx":[30.086,-94.102],"baton rouge, la":[30.451,-91.187],"montgomery, al":[32.377,-86.3],"huntsville, al":[34.73,-86.586],"pensacola, fl":[30.421,-87.217],"tallahassee, fl":[30.438,-84.281],"lakeland, fl":[28.039,-81.95],"fort myers, fl":[26.641,-81.872],"roanoke, va":[37.271,-79.942],"asheville, nc":[35.595,-82.551],"greensboro, nc":[36.073,-79.792],"durham, nc":[35.994,-78.899],"topeka, ks":[39.049,-95.678],"lincoln, ne":[40.813,-96.702],"cedar rapids, ia":[41.978,-91.665],"duluth, mn":[46.787,-92.1],"rochester, mn":[44.022,-92.47],"la porte, tx":[29.666,-95.019],"geismar, la":[30.221,-91.0],"taylorsville, ms":[31.836,-89.432],"new caney, tx":[30.145,-95.174],"texarkana, ar":[33.442,-94.038],"kalamazoo, mi":[42.292,-85.587],"suffolk, va":[36.728,-76.584],"blandon, pa":[40.443,-75.885],"la vergne, tn":[36.156,-86.582],"neosho, mo":[36.869,-94.37],"niagara falls, ny":[43.094,-79.057],"mishawaka, in":[41.662,-86.159],"little falls, mn":[45.976,-94.362],"waddell, az":[33.57,-112.461],"irmo, sc":[34.086,-81.183],"cold spring, mn":[45.456,-94.429],"faribault, mn":[44.295,-93.269],"brainerd, mn":[46.358,-94.201],"eagan, mn":[44.804,-93.167],"savage, mn":[44.779,-93.336],"byron, mn":[44.033,-92.645],"alsip, il":[41.669,-87.739],"bolingbrook, il":[41.699,-88.069],"rock island, il":[41.509,-90.579],"west chester, oh":[39.327,-84.413],"moraine, oh":[39.711,-84.222],"springdale, oh":[39.287,-84.485],"sidney, oh":[40.284,-84.155],"salem, oh":[40.901,-80.857],"monroe township, nj":[40.33,-74.432],"burlington, nj":[40.071,-74.865],"phillipsburg, nj":[40.694,-75.19],"rochester, ny":[43.157,-77.616],"breinigsville, pa":[40.537,-75.632],"olyphant, pa":[41.468,-75.603],"reading, pa":[40.336,-75.927],"old forge, pa":[41.371,-75.737],"mertztown, pa":[40.498,-75.683],"bloomington, ca":[34.07,-117.396],"ontario, ca":[34.063,-117.651],"rialto, ca":[34.106,-117.37],"healdsburg, ca":[38.613,-122.869],"fairfield, ca":[38.249,-122.04],"stockton, ca":[37.958,-121.291],"elk grove, ca":[38.409,-121.372],"edinburg, tx":[26.302,-98.163],"seagoville, tx":[32.649,-96.533],"lancaster, tx":[32.592,-96.756],"summerville, sc":[33.019,-80.176],"vidalia, ga":[32.218,-82.413],"brunswick, ga":[31.15,-81.492],"dalton, ga":[34.77,-84.97],"andalusia, al":[31.309,-86.483],"oshkosh, wi":[44.025,-88.543],"waukesha, wi":[43.012,-88.231],"stevens point, wi":[44.524,-89.574],"oak creek, wi":[42.886,-87.863],"la crosse, wi":[43.801,-91.239],"perham, mn":[46.594,-95.573],"richwood, ky":[38.967,-84.605],"burlington, ia":[40.807,-91.113],"grand island, ne":[40.922,-98.342],"norfolk, ne":[42.029,-97.417],"fort smith, ar":[35.386,-94.399],"del rio, tx":[29.363,-100.896],"odessa, tx":[31.846,-102.368],"marianna, fl":[30.774,-85.227],"panama city, fl":[30.159,-85.66],"clearfield, ut":[41.11,-112.025],"american fork, ut":[40.377,-111.795],"layton, ut":[41.06,-111.971],"springfield, or":[44.046,-123.022],"tumwater, wa":[46.972,-122.909],"fife, wa":[47.237,-122.357],"kent, wa":[47.381,-122.235],"everett, wa":[47.979,-122.202],"auburn, wa":[47.307,-122.228],"missoula, mt":[46.872,-114.0],"kalispell, mt":[48.196,-114.317],"hayden, id":[47.766,-116.787],"franklin, ma":[42.084,-71.397],"taunton, ma":[41.901,-71.09],"bangor, me":[44.801,-68.778],"stamford, ct":[41.053,-73.539],"bridgeville, de":[38.743,-75.604],"huntersville, nc":[35.411,-80.843],"elizabethton, tn":[36.349,-82.211],"cleveland, tn":[35.16,-84.877],"albertville, al":[34.268,-86.209],"prescott, az":[34.54,-112.468],"yuma, az":[32.693,-114.628],"tracy, ca":[37.74,-121.425],"rancho cucamonga, ca":[34.106,-117.593],"chino, ca":[33.984,-117.689],"fremont, ca":[37.548,-121.989],"brooklyn park, mn":[45.094,-93.356],"garfield, nj":[40.882,-74.114],"west columbia, sc":[33.992,-81.074],"saint marys, oh":[40.543,-84.389],"fontana, ca":[34.092,-117.435],"riverside, ca":[33.953,-117.396],"san bernardino, ca":[34.108,-117.289],"redlands, ca":[34.056,-117.183],"corona, ca":[33.875,-117.566],"moreno valley, ca":[33.938,-117.23],"temecula, ca":[33.494,-117.148],"murrieta, ca":[33.554,-117.213],"victorville, ca":[34.536,-117.291],"hesperia, ca":[34.426,-117.301],"upland, ca":[34.098,-117.648],"colton, ca":[34.074,-117.313],"perris, ca":[33.783,-117.228],"indio, ca":[33.721,-116.215],"bakersfield, ca":[35.373,-119.019],"modesto, ca":[37.639,-120.997],"visalia, ca":[36.33,-119.292],"santa rosa, ca":[38.44,-122.714],"salinas, ca":[36.678,-121.656],"santa maria, ca":[34.953,-120.436],"san jose, ca":[37.338,-121.886],"oakland, ca":[37.804,-122.271],"long beach, ca":[33.77,-118.194],"anaheim, ca":[33.836,-117.914],"santa ana, ca":[33.746,-117.868],"irvine, ca":[33.684,-117.826],"oxnard, ca":[34.197,-119.177],"ventura, ca":[34.275,-119.229],"santa barbara, ca":[34.421,-119.698],"san luis obispo, ca":[35.283,-120.66],"goodyear, az":[33.436,-112.358],"mesa, az":[33.415,-111.831],"chandler, az":[33.303,-111.841],"gilbert, az":[33.353,-111.789],"tempe, az":[33.428,-111.94],"scottsdale, az":[33.494,-111.926],"glendale, az":[33.539,-112.186],"peoria, az":[33.581,-112.238],"surprise, az":[33.631,-112.333],"flagstaff, az":[35.198,-111.651],"reno, nv":[39.53,-119.814],"sparks, nv":[39.535,-119.753],"north las vegas, nv":[36.199,-115.117],"henderson, nv":[36.04,-114.982],"north mankato, mn":[44.173,-94.034],"mankato, mn":[44.164,-93.999],"mundelein, il":[42.263,-87.984],"frankfort, in":[40.28,-86.511],"milford, ct":[41.222,-73.057],"north platte, ne":[41.124,-100.765],"kearney, ne":[40.699,-99.083],"north liberty, ia":[41.749,-91.596],"waterloo, ia":[42.493,-92.343],"davenport, ia":[41.524,-90.578],"sioux city, ia":[42.5,-96.4],"springfield, mo":[37.209,-93.292],"joplin, mo":[37.084,-94.513],"columbia, mo":[38.952,-92.334],"rapid city, sd":[44.081,-103.231],"billings, mt":[45.783,-108.501],"great falls, mt":[47.507,-111.292],"casper, wy":[42.867,-106.313],"cheyenne, wy":[41.14,-104.82],"pueblo, co":[38.254,-104.609],"colorado springs, co":[38.834,-104.821],"fort collins, co":[40.585,-105.084],"grand junction, co":[39.064,-108.551],"ogden, ut":[41.223,-111.974],"provo, ut":[40.234,-111.659],"st george, ut":[37.096,-113.568],"santa fe, nm":[35.687,-105.938],"las cruces, nm":[32.32,-106.764],"roswell, nm":[33.394,-104.523],"lubbock, tx":[33.578,-101.855],"san angelo, tx":[31.464,-100.437],"tyler, tx":[32.351,-95.301],"longview, tx":[32.501,-94.74],"texarkana, tx":[33.426,-94.048],"mcallen, tx":[26.204,-98.23],"brownsville, tx":[25.902,-97.497],"harlingen, tx":[26.191,-97.695],"college station, tx":[30.628,-96.334],"lufkin, tx":[31.338,-94.729],"abilene, tx":[32.449,-99.733],"wichita falls, tx":[33.914,-98.493]};
+
+// Geo: local cache first, then Nominatim for anything missing
+const geoCache={};// runtime cache for Nominatim results
+function geo(l){if(!l)return null;const k=l.toLowerCase().trim().replace(/\./g,"").replace(/\s+/g," ");
+  if(CC[k])return{lat:CC[k][0],lng:CC[k][1]};
+  if(geoCache[k])return geoCache[k];
+  for(const[c,co]of Object.entries(CC)){if(k===c.replace(/\./g,"")||(k.includes(c.replace(/\./g,""))&&k.length<c.length+8))return{lat:co[0],lng:co[1]};}
+  const co=k.split(",")[0].trim();for(const[c,coords]of Object.entries(CC)){if(c.startsWith(co+","))return{lat:coords[0],lng:coords[1]};}
+  return geoCache[k]||null;}
+
+// Async geocode via Nominatim (free, no key, 1req/sec)
+let nominatimBusy=false;
+async function geoNominatim(location){
+  if(!location)return null;
+  const k=location.toLowerCase().trim().replace(/\./g,"").replace(/\s+/g," ");
+  if(CC[k])return{lat:CC[k][0],lng:CC[k][1]};
+  if(geoCache[k])return geoCache[k];
+  const localResult=geo(location);
+  if(localResult)return localResult;
+  const skip=["midwest","east coast","west coast","southeast","southwest","northeast","northwest","south","north","east","west","anywhere","nationwide"];
+  if(skip.some(s=>k.includes(s)))return null;
+  // Wait for rate limit
+  while(nominatimBusy)await new Promise(r=>setTimeout(r,200));
+  nominatimBusy=true;
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location+', USA')}&format=json&limit=1`,
+      {headers:{'User-Agent':'FreightMatcher/1.0'}});
+    const data=await r.json();
+    if(data&&data[0]){
+      const result={lat:parseFloat(data[0].lat),lng:parseFloat(data[0].lon)};
+      geoCache[k]=result;return result;
+    }return null;
+  }catch{return null;}
+  finally{setTimeout(()=>{nominatimBusy=false;},1100);}
+}
+function hav(a1,n1,a2,n2){const R=3959,dA=(a2-a1)*Math.PI/180,dN=(n2-n1)*Math.PI/180;
+  const x=Math.sin(dA/2)**2+Math.cos(a1*Math.PI/180)*Math.cos(a2*Math.PI/180)*Math.sin(dN/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
+
+// ─── State abbreviations ────────────────────────────────────────────
+const SA={"Alabama":"AL","Alaska":"AK","Arizona":"AZ","Arkansas":"AR","California":"CA","Colorado":"CO","Connecticut":"CT","Delaware":"DE","Florida":"FL","Georgia":"GA","Hawaii":"HI","Idaho":"ID","Illinois":"IL","Indiana":"IN","Iowa":"IA","Kansas":"KS","Kentucky":"KY","Louisiana":"LA","Maine":"ME","Maryland":"MD","Massachusetts":"MA","Michigan":"MI","Minnesota":"MN","Mississippi":"MS","Missouri":"MO","Montana":"MT","Nebraska":"NE","Nevada":"NV","New Hampshire":"NH","New Jersey":"NJ","New Mexico":"NM","New York":"NY","North Carolina":"NC","North Dakota":"ND","Ohio":"OH","Oklahoma":"OK","Oregon":"OR","Pennsylvania":"PA","Rhode Island":"RI","South Carolina":"SC","South Dakota":"SD","Tennessee":"TN","Texas":"TX","Utah":"UT","Vermont":"VT","Virginia":"VA","Washington":"WA","West Virginia":"WV","Wisconsin":"WI","Wyoming":"WY","British Columbia":"BC","Ontario":"ON","Quebec":"QC","Alberta":"AB"};
+function toST(loc){if(!loc)return loc;const ci=loc.lastIndexOf(',');if(ci<0)return loc;
+  const city=loc.substring(0,ci).trim();let st=loc.substring(ci+1).trim();
+  if(st.length===2)return city+', '+st.toUpperCase();
+  if(SA[st])return city+', '+SA[st];
+  // Try title case match
+  const tc=st.charAt(0).toUpperCase()+st.slice(1).toLowerCase();
+  for(const[full,abbr]of Object.entries(SA)){if(full.toLowerCase()===st.toLowerCase())return city+', '+abbr;}
+  return loc;}
+
+// ─── Local TRM Parser (instant, no AI needed) ──────────────────────
+// Detects the repeating TRM pattern: origin, dest, date, time, date, time, equipment, "Select Item N"
+function tryLocalParse(text){
+  const lines=text.split(/\n/).map(l=>l.trim()).filter(l=>l);
+  // Check if this looks like TRM format by finding "Select Item" markers
+  const selectItems=lines.filter(l=>/^Select Item \d+/i.test(l));
+  if(selectItems.length<2)return null; // Not TRM format — fall back to AI
+
+  const loads=[];
+  // Split into blocks by "Select Item"
+  const blocks=[];let cur=[];
+  for(const line of lines){
+    if(/^Select Item \d+/i.test(line)){
+      if(cur.length>0)blocks.push(cur);
+      cur=[];
+    } else {
+      cur.push(line);
+    }
+  }
+  if(cur.length>0)blocks.push(cur);
+
+  // Also handle case where "Select Item" comes at END of each block
+  // Re-parse: find all content between Select Item markers
+  const text2=lines.join('\n');
+  const parts=text2.split(/Select Item \d+\s*/i).filter(s=>s.trim());
+
+  const parseBlock=(blockLines)=>{
+    // Expect: origin(city,state), dest(city,state), pu_date, pu_time, del_date, del_time, equipment
+    // Lines may be 6-7 items depending on format
+    const bl=blockLines.filter(l=>l&&!/^Select Item/i.test(l));
+    if(bl.length<5)return null;
+
+    // Detect which lines are dates (M/D/YYYY or MM/DD/YYYY)
+    const isDate=(s)=>/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s);
+    // Detect time or time window
+    const isTime=(s)=>/^\d{1,2}:\d{2}/.test(s);
+    // Detect equipment
+    const isEquip=(s)=>/van|reefer|flat|dry|step|straight|tanker|trailer/i.test(s);
+
+    let origin='',dest='',puDate='',puTime='',delDate='',delTime='',equip='Van/Dry Van';
+
+    // Strategy: find the first two non-date, non-time, non-equipment lines as origin/dest
+    // Then dates and times in order
+    const locs=[],dates=[],times=[];
+    for(const l of bl){
+      if(isEquip(l)&&!isDate(l)&&!isTime(l)){equip=l;}
+      else if(isDate(l)){dates.push(l);}
+      else if(isTime(l)){times.push(l);}
+      else if(l.includes(',')&&!isDate(l)){locs.push(l);}
+    }
+
+    if(locs.length>=2){origin=locs[0];dest=locs[1];}
+    else if(locs.length===1){origin=locs[0];}
+    if(dates.length>=2){puDate=dates[0];delDate=dates[1];}
+    else if(dates.length===1){puDate=dates[0];}
+    if(times.length>=2){puTime=times[0];delTime=times[1];}
+    else if(times.length===1){puTime=times[0];}
+
+    // Normalize city names (Title Case) and convert state to abbreviation
+    const normCity=(c)=>{
+      if(!c)return c;
+      const parts=c.split(',');
+      if(parts.length<2)return c;
+      const city=parts[0].trim().split(/\s+/).map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' ');
+      const state=parts.slice(1).join(',').trim();
+      return toST(city+', '+state);
+    };
+
+    origin=normCity(origin);
+    dest=normCity(dest);
+
+    // Convert M/D/YYYY to YYYY-MM-DD
+    const convDate=(d)=>{
+      if(!d)return'';
+      const m=d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if(m)return`${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+      return d;
+    };
+    puDate=convDate(puDate);delDate=convDate(delDate);
+
+    // Map equipment strings
+    const eqMap={'Dry Van 53\'':'Van/Dry Van','Van/Reefer 53\'':'Van/Reefer','Reefer 53\'':'Reefer','Flatbed 53\'':'Flatbed','Step Deck 53\'':'Step Deck'};
+    equip=eqMap[equip]||equip;
+    if(!EQ_ALL.includes(equip)){
+      if(/dry van|van.*53|53.*van/i.test(equip))equip='Van/Dry Van';
+      else if(/reefer|refriger/i.test(equip))equip='Reefer';
+      else if(/flat/i.test(equip))equip='Flatbed';
+      else if(/step/i.test(equip))equip='Step Deck';
+      else if(/straight|box/i.test(equip))equip='Straight Truck';
+      else if(/tank/i.test(equip))equip='Tanker';
+      else equip='Van/Dry Van';
+    }
+
+    if(!origin||!dest)return null;
+    return{origin,destination:dest,equipment:equip,weight:40000,rate:'',
+      pickup_date:puDate,pickup_time:puTime,delivery_date:delDate,delivery_time:delTime,notes:''};
+  };
+
+  // Try parsing from the split parts
+  for(const part of parts){
+    const bl=part.split(/\n/).map(l=>l.trim()).filter(l=>l);
+    const load=parseBlock(bl);
+    if(load)loads.push(load);
+  }
+
+  return loads.length>0?loads:null;
+}
+
+// ─── DeepSeek V3.2 API ──────────────────────────────────────────────
+const TRUCK_SYS=`You are an expert freight truck/carrier data extractor. Extract trucks into a JSON array.
+
+TWO FORMATS:
+1. LOCATION ONLY: "Dallas, TX - 12:00 PM" → truck at a location
+2. PREFERRED LANES: "Dallas to Houston" or "Fontana, CA to MIDWEST" → truck wants a specific lane
+
+CRITICAL EQUIPMENT TYPE DETECTION:
+Look carefully for equipment type indicators anywhere in the text. Common patterns:
+- Explicit: "Reefer", "Flatbed", "Step Deck", "Tanker", "Van", "Dry Van", "Straight Truck"
+- Abbreviations: "R"=Reefer, "V"=Van/Dry Van, "DV"=Van/Dry Van, "FB"=Flatbed, "SD"=Step Deck, "RF"=Reefer, "ST"=Straight Truck
+- With trailer size: "53' Reefer", "48' Flatbed", "53R", "53V", "53DV"
+- Section headers: "REEFERS:", "VANS:", "FLATBEDS:", "DRY VANS:" — applies to all trucks listed below that header until the next equipment header
+- Parenthetical: "(Reefer)", "(R)", "(FB)", "(Van)"
+- Inline mentions: "reefer available", "flatbed in Dallas", "van out of Chicago"
+- Equipment listed on same line or adjacent line to truck location
+
+Equipment values: "Van/Dry Van"|"Reefer"|"Flatbed"|"Step Deck"|"Straight Truck"|"Tanker"
+Only default to "Van/Dry Van" if there is truly NO equipment info anywhere in the text for that truck.
+
+CRITICAL DATE HANDLING:
+Dates often appear as SECTION HEADERS above a group of trucks:
+  "WEDNESDAY 3.25.2026"
+  "Fontana, CA to MIDWEST"
+The date header applies to ALL trucks listed below it until the next date header. Convert to YYYY-MM-DD.
+Other date formats: "3/25/2026", "03.25.2026", "March 25", "3-25", "Wednesday 3.25", "TUESDAY 03/25/26"
+
+For each truck return:
+- "location": "City, ST" — where the truck IS. EXACT city/state. Convert state names to 2-letter abbreviations.
+- "equipment": Detected equipment type (see rules above). Default "Van/Dry Van" ONLY if no equipment info exists.
+- "weight": lbs number. Defaults: flatbed=48000, van=45000, reefer=43000
+- "driver": driver name or ""
+- "carrier": company name or email or ""
+- "available": date as YYYY-MM-DD if found (from header or inline). Time if mentioned.
+- "preferred_destinations": ["City, ST",...] for lane trucks, [] for location-only. Regional terms like "MIDWEST", "EAST COAST", "SOUTHEAST" are valid destinations.
+- "notes": phone numbers, other info
+
+RULES:
+- Carrier email/name above a list = associate with ALL trucks below until next carrier
+- Equipment header above trucks = associate with ALL trucks below until next equipment header
+- Date header above trucks = associate with ALL trucks below until next date
+- "to"/">"/"→" between cities = preferred lane. "City - TIME" = location only.
+- "anywhere in between" → note in notes field, still extract the endpoints
+- RESPOND WITH ONLY A VALID JSON ARRAY. No markdown, no backticks.`;
+
+const LOAD_SYS=`You are an expert freight load extractor. Extract loads into a JSON array.
+For each: "origin":"City, ST" EXACT,"destination":"City, ST" EXACT,"equipment":"Van/Dry Van"|"Reefer"|"Van/Reefer"|"Flatbed"|"Step Deck"|"Straight Truck"|"Tanker" ("Dry Van 53'"="Van/Dry Van","Van/Reefer 53'"="Van/Reefer","Reefer 53'"="Reefer"). IMPORTANT: "Van/Reefer" is its OWN type — do not convert it to "Reefer". Keep it as "Van/Reefer" when the source says "Van/Reefer".
+"weight":lbs default 40000,"rate":"$","pickup_date":"YYYY-MM-DD","pickup_time":"PRESERVE FULL TIME WINDOW e.g. '12:00-17:00' or '07:01-15:30' or '08:00' for single times","delivery_date":"YYYY-MM-DD","delivery_time":"same - preserve windows like '08:00-17:00' or '09:30'","notes":""
+CRITICAL: Time windows like "12:00-17:00" or "06:00-23:59" MUST be kept exactly as-is. Do NOT split them or drop the end time.
+Convert full state names to 2-letter. TRM format: origin,dest,pu date,pu time,del date,del time,equip,"Select Item N". Handle ALL formats. ONLY valid JSON array.`;
+
+async function callClaude(sys,text){const key=localStorage.getItem("fm_key");if(!key)throw new Error("NO_KEY");
+  const r=await fetch("https://api.deepseek.com/chat/completions",{method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+    body:JSON.stringify({model:"deepseek-chat",max_tokens:8192,temperature:0.1,
+      response_format:{type:"json_object"},
+      messages:[{role:"system",content:sys+" RESPOND WITH ONLY A VALID JSON ARRAY."},{role:"user",content:text}]})});
+  if(!r.ok){const e=await r.json().catch(()=>({}));if(r.status===401)throw new Error("INVALID_KEY");if(r.status===429)throw new Error("RATE_LIMITED");
+    throw new Error(e.error?.message||`Error ${r.status}`);}
+  const d=await r.json();const t=(d.choices?.[0]?.message?.content||"").replace(/```json\s*/g,"").replace(/```\s*/g,"").trim();
+  const s=t.indexOf("["),e=t.lastIndexOf("]");if(s===-1||e===-1)throw new Error("No valid data returned. Try again.");return JSON.parse(t.substring(s,e+1));}
+function chunk(t,m=10000){if(t.length<=m)return[t];const items=t.split(/(?=Select Item \d)/i).filter(s=>s.trim());
+  if(items.length>1){const c=[];let cur="";for(const it of items){if((cur+it).length>m&&cur){c.push(cur);cur="";}cur+=it;}if(cur)c.push(cur);return c;}
+  const lines=t.split('\n');const c=[];let cur=[];let len=0;for(const l of lines){cur.push(l);len+=l.length;if(len>m){c.push(cur.join('\n'));cur=[];len=0;}}if(cur.length)c.push(cur.join('\n'));return c;}
+async function callChunked(sys,text,onP){const ch=chunk(text);if(ch.length===1)return callClaude(sys,text);
+  let all=[];for(let i=0;i<ch.length;i++){if(onP)onP(i+1,ch.length);const r=await callClaude(sys,ch[i]);if(Array.isArray(r))all=all.concat(r);}return all;}
+
+// ─── Email with Canvas Image ────────────────────────────────────────
+function generateLaneCanvas(loads){
+  if(loads.length>25) loads=loads.slice(0,25);
+  const rowH=44,headerH=44;
+  const cols=[
+    {label:'Origin',w:220},{label:'Destination',w:220},
+    {label:'PU Date',w:100},{label:'PU Time',w:130},
+    {label:'DEL Date',w:100},{label:'DEL Time',w:130},
+    {label:'Equipment',w:140},{label:'Distance',w:90}
+  ];
+  let tableW=0;cols.forEach(c=>{tableW+=c.w;});
+  const W=tableW+2,H=headerH+(Math.max(loads.length,1)*rowH)+2;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  const x=cv.getContext('2d');
+
+  x.fillStyle='#ffffff';x.fillRect(0,0,W,H);
+  x.fillStyle='#fafafa';x.fillRect(0,0,W,headerH);
+  x.strokeStyle='#e0e0e0';x.lineWidth=1;x.beginPath();x.moveTo(0,headerH);x.lineTo(W,headerH);x.stroke();
+  let hx=1;
+  cols.forEach((cl,ci)=>{
+    x.font='bold 13px -apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif';
+    x.fillStyle='#222';x.textAlign='left';
+    x.fillText(cl.label,hx+12,headerH/2+5);
+    const lw=x.measureText(cl.label).width;
+    x.font='400 10px Arial';x.fillStyle='#999';x.fillText('\u2193',hx+12+lw+5,headerH/2+5);
+    if(ci<cols.length-1){x.strokeStyle='#e8e8e8';x.lineWidth=0.5;x.beginPath();x.moveTo(hx+cl.w,0);x.lineTo(hx+cl.w,headerH);x.stroke();}
+    hx+=cl.w;
+  });
+
+  let ry=headerH;
+  if(loads.length===0){
+    x.fillStyle='#fff';x.fillRect(0,ry,W,rowH);
+    x.fillStyle='#aaa';x.font='italic 13px -apple-system,Arial,sans-serif';x.textAlign='center';
+    x.fillText('No loads found',W/2,ry+rowH/2+4);
+  } else {
+    loads.forEach((ld,li)=>{
+      x.fillStyle=li%2===0?'#ffffff':'#fafbfc';x.fillRect(0,ry,W,rowH);
+      x.strokeStyle='#eeeeee';x.lineWidth=0.5;x.beginPath();x.moveTo(0,ry+rowH);x.lineTo(W,ry+rowH);x.stroke();
+      const vals=[ld.origin,ld.dest,ld.shipDate,ld.shipTime,ld.delDate,ld.delTime,ld.eq,ld.distance];
+      let cx=1;
+      vals.forEach((v,vi)=>{
+        x.fillStyle=vi===6?'#0d8abc':vi===7?'#666':'#333';
+        x.font='400 13px -apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif';x.textAlign='left';
+        let maxW=cols[vi].w-24;let txt=v||'';
+        while(x.measureText(txt).width>maxW&&txt.length>3)txt=txt.slice(0,-1);
+        if(txt!==v&&v)txt+='...';
+        x.fillText(txt,cx+12,ry+rowH/2+5);
+        if(vi<cols.length-1){x.strokeStyle='#f0f0f0';x.lineWidth=0.3;x.beginPath();x.moveTo(cx+cols[vi].w,ry);x.lineTo(cx+cols[vi].w,ry+rowH);x.stroke();}
+        cx+=cols[vi].w;
+      });
+      ry+=rowH;
+    });
+  }
+  x.strokeStyle='#ddd';x.lineWidth=1;x.strokeRect(0,0,W,H);
+  return cv;
+}
+
+// Strip year from date: "2026-03-19" → "3/19" or "3/19/2026" → "3/19"
+function fmtDate(d){
+  if(!d)return'';
+  // Handle YYYY-MM-DD
+  const iso=d.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(iso)return parseInt(iso[2])+'/'+parseInt(iso[3]);
+  // Handle M/D/YYYY
+  const mdy=d.match(/^(\d{1,2})\/(\d{1,2})\/\d{4}$/);
+  if(mdy)return mdy[1]+'/'+mdy[2];
+  // Handle M/D/YY
+  const mdy2=d.match(/^(\d{1,2})\/(\d{1,2})\/\d{2}$/);
+  if(mdy2)return mdy2[1]+'/'+mdy2[2];
+  return d;
+}
+
+function buildEmailWithImage(truck,ml){
+  const nm=truck.driver||truck.carrier||'';
+  const greeting=nm?`Hi ${nm.split('@')[0]},`:'Good afternoon,';
+  const imgPlaceholder='[See attached image for load details]';
+  const hasLanes=(truck.preferred_destinations||[]).length>0;
+
+  const canvasLoads=ml.map(m=>({
+    origin:m.load.origin,dest:m.load.destination,
+    shipDate:fmtDate(m.load.pickup_date),shipTime:m.load.pickup_time||'',
+    delDate:fmtDate(m.load.delivery_date),delTime:m.load.delivery_time||'',
+    eq:m.load.equipment,distance:m.distance+' mi'
+  }));
+  const canvas=generateLaneCanvas(canvasLoads);
+
+  // Build the lane context sentence
+  let laneContext='';
+  if(hasLanes){
+    const dests=truck.preferred_destinations.join(' / ');
+    laneContext=` looking to go to ${dests}`;
+  }
+
+  const subj=ml.length===1
+    ?`Load Opportunity: ${ml[0].load.origin} to ${ml[0].load.destination} (${ml[0].load.equipment})`
+    :`${ml.length} Load Opportunities Near ${truck.location}`;
+
+  const emailText=`${greeting}
+
+Thank you for sharing your truck availability with us. After cross-referencing your truck list against our current load board, we found ${ml.length===1?'an option':'some options'} for your ${truck.equipment} in ${truck.location}${laneContext}.
+
+${imgPlaceholder}
+
+If ${ml.length===1?'this works':'any of these work'} for you, just let me know!
+
+Thanks,
+${localStorage.getItem('fm_sender')||'Alec'}`;
+
+  return{subj,emailText,canvas,imgPlaceholder};
+}
+
+// Build email for ALL matches across multiple trucks (same carrier)
+function buildBulkEmail(truckMatches){
+  // truckMatches = [{truck, matches:[...]}, ...]
+  const carrier=truckMatches[0].truck.carrier||'';
+  const nm=truckMatches[0].truck.driver||carrier||'';
+  const greeting=nm?`Hi ${nm.split('@')[0]},`:'Good afternoon,';
+  const imgPlaceholder='[See attached image for load details]';
+
+  // Combine all loads for the canvas
+  const allLoads=[];
+  truckMatches.forEach(({truck,matches:tm})=>{
+    tm.forEach(m=>{allLoads.push({
+      origin:m.load.origin,dest:m.load.destination,
+      shipDate:fmtDate(m.load.pickup_date),shipTime:m.load.pickup_time||'',
+      delDate:fmtDate(m.load.delivery_date),delTime:m.load.delivery_time||'',
+      eq:m.load.equipment,distance:m.distance+' mi'
+    });});
+  });
+  const canvas=generateLaneCanvas(allLoads);
+
+  // Build truck descriptions
+  const truckDescs=truckMatches.map(({truck,matches:tm})=>{
+    const hasLanes=(truck.preferred_destinations||[]).length>0;
+    const laneStr=hasLanes?` looking to go to ${truck.preferred_destinations.join(' / ')}`:'';
+    return `• ${truck.equipment} in ${truck.location}${laneStr} — ${tm.length} option${tm.length!==1?'s':''}`;
+  }).join('\n');
+
+  const totalLoads=truckMatches.reduce((s,t)=>s+t.matches.length,0);
+  const subj=`${totalLoads} Load Opportunities for Your Trucks`;
+
+  const emailText=`${greeting}
+
+Thank you for sharing your truck availability with us. After cross-referencing your truck list against our current load board, we found options for the following:
+
+${truckDescs}
+
+Here are the details:
+
+${imgPlaceholder}
+
+If any of these work for you, just let me know!
+
+Thanks,
+${localStorage.getItem('fm_sender')||'Alec'}`;
+
+  return{subj,emailText,canvas,imgPlaceholder};
+}
+
+function doSendEmail(emailData,carrierEmail){
+  // Track usage stats
+  const sent=parseInt(localStorage.getItem('fm_emails_sent')||'0')+1;
+  localStorage.setItem('fm_emails_sent',sent);
+  window.dispatchEvent(new CustomEvent('fm-email-sent'));
+  const{subj,emailText,canvas,imgPlaceholder}=emailData;
+  const dataUrl=canvas.toDataURL('image/png');
+  const imgIdx=emailText.indexOf(imgPlaceholder);
+  const before=emailText.substring(0,imgIdx).trim();
+  const after=emailText.substring(imgIdx+imgPlaceholder.length).trim();
+
+  const htmlBody='<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.6;">'+
+    '<p style="margin:0 0 12px;">'+before.replace(/\n\n/g,'</p><p style="margin:0 0 12px;">').replace(/\n/g,'<br>')+'</p>'+
+    '<img src="'+dataUrl+'" style="max-width:100%;border-radius:4px;margin:12px 0;display:block;" />'+
+    '<p style="margin:12px 0 0;">'+after.replace(/\n\n/g,'</p><p style="margin:0 0 12px;">').replace(/\n/g,'<br>')+'</p>'+
+    '</div>';
+  const plainText=emailText.replace(imgPlaceholder,'[Load details table — paste email to see image]');
+  const mailtoUrl='mailto:'+encodeURIComponent(carrierEmail||'')+'?subject='+encodeURIComponent(subj);
+
+  try{
+    const htmlBlob=new Blob([htmlBody],{type:'text/html'});
+    const textBlob=new Blob([plainText],{type:'text/plain'});
+    navigator.clipboard.write([new ClipboardItem({'text/html':htmlBlob,'text/plain':textBlob})]).then(()=>{
+      showToast('✅ Email copied with load image — paste into your email body','success',4000);
+      setTimeout(()=>{window.location.href=mailtoUrl;},800);
+    }).catch(()=>{window.open(mailtoUrl+'&body='+encodeURIComponent(plainText));});
+  }catch(e){window.open(mailtoUrl+'&body='+encodeURIComponent(plainText));}
+}
+function sendEmailWithImage(truck,ml){doSendEmail(buildEmailWithImage(truck,ml),truck.carrier||'');}
+function sendBulkEmail(truckMatches){doSendEmail(buildBulkEmail(truckMatches),truckMatches[0].truck.carrier||'');}
+
+// ─── Map ────────────────────────────────────────────────────────────
+function addArrow(layer,from,to,color,weight,opacity,dashed){
+  L.polyline([from,to],{color,weight,opacity,dashArray:dashed?'6 4':''}).addTo(layer);
+  const dx=to[1]-from[1],dy=to[0]-from[0],a=Math.atan2(dx,dy),len=0.25;
+  L.polygon([to,[to[0]-len*Math.cos(a-0.4),to[1]-len*Math.sin(a-0.4)],[to[0]-len*Math.cos(a+0.4),to[1]-len*Math.sin(a+0.4)]],
+    {color,weight:0,fillColor:color,fillOpacity:opacity,stroke:false}).addTo(layer);}
+
+function USMap({trucks,loads,matches,selTruck,radius,onTruckClick,showSplash}){
+  const mapRef=useRef(null);const mapI=useRef(null);
+  const ly=useRef({trucks:null,loads:null,routes:null,match:null,lanes:null,rc:null});
+
+  useEffect(()=>{if(mapI.current||!mapRef.current)return;
+    const map=L.map(mapRef.current,{center:[39,-98],zoom:4,minZoom:3,maxZoom:18,maxBounds:[[20,-135],[55,-55]],maxBoundsViscosity:0.8});
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(map);
+    ly.current={trucks:L.layerGroup().addTo(map),loads:L.layerGroup().addTo(map),routes:L.layerGroup().addTo(map),match:L.layerGroup().addTo(map),lanes:L.layerGroup().addTo(map),rc:null};
+    const lg=L.control({position:'bottomleft'});
+    lg.onAdd=function(){const d=L.DomUtil.create('div','');
+      d.style.cssText='background:rgba(13,13,13,0.92);padding:14px 16px;border-radius:14px;border:1px solid #333;font-family:"DM Sans",sans-serif;font-size:11px;color:#b0b0b0;line-height:2.1;min-width:180px';
+      d.innerHTML=`<div style="font-weight:800;color:#fafafa;margin-bottom:4px;font-size:13px;font-family:Outfit">🔥 LEGEND</div>
+        <div style="font-size:9px;color:#666;font-weight:700;letter-spacing:1.5px;margin-bottom:2px">EQUIPMENT GLOW</div>
+        ${Object.entries({"Flatbed":"#ff8c42","Van":"#4da6ff","Reefer":"#00d4aa","Step Deck":"#b388ff","Straight":"#ff4d4d","Tanker":"#ff69b4"}).map(([n,c])=>`<div style="display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border-radius:50%;background:radial-gradient(circle,${c}66,${c}22);border:1px solid ${c}88"></span>${n}</div>`).join('')}
+        <div style="font-size:9px;color:#666;font-weight:700;letter-spacing:1.5px;margin-top:6px;margin-bottom:2px">ICONS</div>
+        <div style="display:flex;align-items:center;gap:7px">🚛 Truck</div>
+        <div style="display:flex;align-items:center;gap:7px">📦 Load (origin)</div>
+        <div style="display:flex;align-items:center;gap:7px">🔥 Match hotspot</div>
+        <div style="font-size:9px;color:#666;font-weight:700;letter-spacing:1.5px;margin-top:6px;margin-bottom:2px">LINES</div>
+        <div style="display:flex;align-items:center;gap:7px"><span style="width:18px;height:3px;background:linear-gradient(90deg,#00d4aa,#00ffc8);border-radius:2px"></span>Match</div>
+        <div style="display:flex;align-items:center;gap:7px"><span style="width:18px;border-top:2px dashed #00bcd4"></span>Lane</div>
+        <div style="display:flex;align-items:center;gap:7px"><span style="width:18px;border-top:2px dashed #ff4d4d"></span>Radius</div>`;
+      return d;};lg.addTo(map);mapI.current=map;return()=>{map.remove();mapI.current=null;};
+  },[]);
+
+  // Fire splash
+  useEffect(()=>{if(!showSplash||!mapRef.current)return;const c=mapRef.current;
+    for(let i=0;i<5;i++){setTimeout(()=>{const s=document.createElement('div');s.className='fire-splash';
+      const sz=100+Math.random()*200;s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*c.offsetWidth}px;top:${Math.random()*c.offsetHeight}px`;
+      c.appendChild(s);setTimeout(()=>s.remove(),1000);},i*150);}
+  },[showSplash]);
+
+  // Trucks — 🚛 with equipment color glow
+  useEffect(()=>{if(!mapI.current)return;const layer=ly.current.trucks;const laneL=ly.current.lanes;
+    layer.clearLayers();laneL.clearLayers();
+    trucks.forEach(t=>{if(!t.coords)return;const col=EC[t.equipment]||'#4da6ff';const sel=t.id===selTruck;
+      const icon=L.divIcon({className:'',
+        html:`<div style="position:relative;display:flex;align-items:center;justify-content:center">
+          ${sel?`<div class="pulse-ring" style="position:absolute;width:32px;height:32px;border:2px solid ${col}"></div>`:''}
+          <div style="width:${sel?34:28}px;height:${sel?34:28}px;border-radius:50%;background:radial-gradient(circle,${col}44 0%,${col}11 70%,transparent);display:flex;align-items:center;justify-content:center;
+            ${sel?`box-shadow:0 0 18px ${col}66`:''};cursor:pointer">
+            <span style="font-size:${sel?20:16}px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5))">🚛</span>
+          </div>
+        </div>`,iconSize:[sel?34:28,sel?34:28],iconAnchor:[sel?17:14,sel?17:14]});
+      const m=L.marker([t.coords.lat,t.coords.lng],{icon,zIndexOffset:sel?1000:0}).addTo(layer);
+      const mc=(matches[t.id]||[]).length;const hl=(t.preferred_destinations||[]).length>0;
+      m.bindPopup(`<div style="font-family:'DM Sans'"><div style="font-weight:700;font-size:14px">🚛 ${t.location}</div>
+        <div style="display:flex;gap:4px;margin-top:6px"><span style="background:${col}22;color:${col};padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600">${t.equipment}</span></div>
+        ${t.carrier?`<div style="font-size:11px;color:#00bcd4;margin-top:4px">${t.carrier}</div>`:''}
+        ${hl?`<div style="font-size:11px;color:#00bcd4;margin-top:4px">→ ${t.preferred_destinations.join(', ')}</div>`:''}
+        ${mc?`<div style="font-size:12px;color:#00d4aa;font-weight:700;margin-top:6px">🔥 ${mc} match${mc!==1?'es':''}</div>`:''}
+      </div>`,{closeButton:false,offset:[0,-16]});
+      m.on('click',()=>onTruckClick(t.id));m.on('mouseover',function(){this.openPopup();});m.on('mouseout',function(){this.closePopup();});
+      if(hl)t.preferred_destinations.forEach(dest=>{const dc=geo(dest);if(dc)addArrow(laneL,[t.coords.lat,t.coords.lng],[dc.lat,dc.lng],'#00bcd4',1.8,sel?0.7:0.3,true);});
+    });
+  },[trucks,selTruck,matches]);
+
+  // Loads — 📦 trailer icon with equipment color glow
+  useEffect(()=>{if(!mapI.current)return;const loadL=ly.current.loads;const routeL=ly.current.routes;
+    loadL.clearLayers();routeL.clearLayers();
+    const mIds=selTruck?new Set((matches[selTruck]||[]).map(m=>m.loadId)):new Set();
+    loads.forEach(l=>{if(!l.oc)return;const hi=mIds.has(l.id);if(selTruck&&!hi)return;
+      const eqCol=EC[l.equipment]||'#4da6ff';const color=hi?'#00d4aa':eqCol;
+      const oI=L.divIcon({className:'',
+        html:`<div style="width:${hi?30:24}px;height:${hi?30:24}px;border-radius:50%;background:radial-gradient(circle,${color}${hi?'55':'33'} 0%,transparent 70%);display:flex;align-items:center;justify-content:center;
+          ${hi?'box-shadow:0 0 14px '+color+'55':''}">
+          <span style="font-size:${hi?16:13}px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5))">📦</span>
+        </div>`,iconSize:[hi?30:24,hi?30:24],iconAnchor:[hi?15:12,hi?15:12]});
+      const om=L.marker([l.oc.lat,l.oc.lng],{icon:oI}).addTo(loadL);
+      om.bindPopup(`<div style="font-family:'DM Sans'"><div style="font-weight:700;font-size:13px">📦 ${l.origin} → ${l.destination}</div>
+        <div style="display:flex;gap:4px;margin-top:6px"><span style="background:${eqCol}22;color:${eqCol};padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600">${l.equipment}</span>
+        ${l.rate?`<span style="background:#00d4aa22;color:#00d4aa;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600">$${l.rate}</span>`:''}</div>
+        ${l.pickup_date?`<div style="font-size:11px;color:#b0b0b0;margin-top:4px">PU: ${l.pickup_date}${l.pickup_time?' '+l.pickup_time:''}</div>`:''}
+      </div>`,{closeButton:false,offset:[0,-14]});
+      om.on('mouseover',function(){this.openPopup();});om.on('mouseout',function(){this.closePopup();});
+      if(l.dc){addArrow(routeL,[l.oc.lat,l.oc.lng],[l.dc.lat,l.dc.lng],color,hi?2.5:1,hi?0.75:0.15,!hi);
+        const dI=L.divIcon({className:'',html:`<div style="width:8px;height:8px;background:${color};border-radius:50%;opacity:${hi?0.85:0.3}"></div>`,iconSize:[8,8],iconAnchor:[4,4]});
+        L.marker([l.dc.lat,l.dc.lng],{icon:dI,interactive:false}).addTo(routeL);}
+    });
+  },[loads,selTruck,matches]);
+
+  // Radius + fires at matches
+  useEffect(()=>{if(!mapI.current)return;const ml=ly.current.match;ml.clearLayers();
+    if(ly.current.rc){mapI.current.removeLayer(ly.current.rc);ly.current.rc=null;}
+    if(selTruck){
+      const truck=trucks.find(t=>t.id===selTruck);if(!truck?.coords)return;
+      ly.current.rc=L.circle([truck.coords.lat,truck.coords.lng],{radius:radius*1609.34,color:'#ff4d4d',weight:2,dashArray:'8 4',fillColor:'#ff4d4d',fillOpacity:0.04}).addTo(mapI.current);
+      (matches[selTruck]||[]).forEach(m=>{const load=loads.find(l=>l.id===m.loadId);if(!load?.oc)return;
+        L.polyline([[truck.coords.lat,truck.coords.lng],[load.oc.lat,load.oc.lng]],{color:'#00d4aa',weight:2.5,opacity:0.7,dashArray:'6 4'}).addTo(ml);
+        L.marker([load.oc.lat,load.oc.lng],{icon:L.divIcon({className:'',html:'<div class="fire-icon" style="font-size:22px;text-align:center;line-height:1">🔥</div>',iconSize:[22,22],iconAnchor:[11,18]}),interactive:false,zIndexOffset:2000}).addTo(ml);
+      });
+    } else {
+      // Show fires at all match points
+      const allMLoadIds=new Set();Object.values(matches).forEach(tm=>tm.forEach(m=>allMLoadIds.add(m.loadId)));
+      loads.forEach(l=>{if(!l.oc||!allMLoadIds.has(l.id))return;
+        L.marker([l.oc.lat,l.oc.lng],{icon:L.divIcon({className:'',html:'<div class="fire-icon" style="font-size:16px;text-align:center;opacity:0.8">🔥</div>',iconSize:[16,16],iconAnchor:[8,13]}),interactive:false,zIndexOffset:2000}).addTo(ml);});
+      Object.keys(matches).forEach(tid=>{const truck=trucks.find(t=>t.id===tid);if(!truck?.coords)return;
+        L.marker([truck.coords.lat,truck.coords.lng],{icon:L.divIcon({className:'',html:'<div class="fire-icon" style="font-size:14px;opacity:0.7">🔥</div>',iconSize:[14,14],iconAnchor:[7,16]}),interactive:false,zIndexOffset:2000}).addTo(ml);});
+    }
+  },[selTruck,trucks,loads,matches,radius]);
+
+  return <div ref={mapRef} style={{width:"100%",height:"100%"}}/>;
+}
+
+// ─── Tutorial System ────────────────────────────────────────────────
+const TUTORIAL_STEPS=[
+  {id:'welcome',title:'Welcome to Freight Matcher 🔥',desc:'This tool matches your trucks to available loads based on proximity. Let\'s walk through how it works.',target:null,pos:'center'},
+  {id:'trucks-tab',title:'Step 1: Add Trucks',desc:'Start by clicking the Trucks tab. Paste carrier emails, dispatcher lists, or truck info in any format. AI extracts locations, equipment types, and preferred lanes.',target:'[data-tab="trucks"]',pos:'below'},
+  {id:'loads-tab',title:'Step 2: Add Loads',desc:'Next, click the Loads tab. Paste from TRM, Revenova/Salesforce, DAT, or any load board. Handles hundreds of loads at once.',target:'[data-tab="loads"]',pos:'below'},
+  {id:'map-tab',title:'Step 3: View the Map',desc:'The Map shows all your trucks (🚛) and loads (📦) on a real map of the US. Equipment type determines the glow color around each icon.',target:'[data-tab="map"]',pos:'below'},
+  {id:'radius',title:'Radius Slider',desc:'Drag the radius slider to expand or shrink the search area. When the radius reaches a truck with matching loads nearby, it lights up with 🔥 fire.',target:null,pos:'right-panel'},
+  {id:'equipment',title:'Equipment Filters',desc:'Filter by equipment type. Default options are Van, Reefer, Van/Reefer, and Trailer. Click "More Types" for Flatbed, Step Deck, Straight Truck, and Tanker.',target:null,pos:'right-panel'},
+  {id:'matches-tab',title:'Step 4: View Matches',desc:'The Matches tab shows every truck↔load match. Click 📧 to email the carrier with load details, or 📋 to copy. Same carrier? Loads are grouped into one email.',target:'[data-tab="matches"]',pos:'below'},
+  {id:'fires',title:'🔥 Fire = Match',desc:'Anywhere you see fire on the map, that\'s where a truck and load have matched. The bigger the fire, the closer the match.',target:null,pos:'center'},
+];
+
+function Tutorial({onClose,step,setStep}){
+  const[cursorPos,setCursorPos]=useState({x:window.innerWidth/2,y:window.innerHeight/2});
+  const s=TUTORIAL_STEPS[step];
+
+  useEffect(()=>{
+    const el=s.target?document.querySelector(s.target):null;
+    if(el){const r=el.getBoundingClientRect();setCursorPos({x:r.left+r.width/2,y:r.top+r.height/2});}
+    else{setCursorPos({x:window.innerWidth/2,y:window.innerHeight/2-50});}
+  },[step]);
+
+  const getHighlightStyle=()=>{
+    if(!s.target)return{display:'none'};
+    const el=document.querySelector(s.target);if(!el)return{display:'none'};
+    const r=el.getBoundingClientRect();
+    return{left:r.left-6,top:r.top-6,width:r.width+12,height:r.height+12};
+  };
+
+  const getTooltipStyle=()=>{
+    if(s.pos==='center')return{left:'50%',top:'50%',transform:'translate(-50%,-50%)'};
+    if(s.pos==='right-panel')return{right:320,top:200};
+    const el=s.target?document.querySelector(s.target):null;
+    if(!el)return{left:'50%',top:'50%',transform:'translate(-50%,-50%)'};
+    const r=el.getBoundingClientRect();
+    if(s.pos==='below')return{left:Math.max(20,r.left),top:r.bottom+16};
+    return{left:r.right+16,top:r.top};
+  };
+
+  return(<div className="tutorial-overlay" onClick={e=>{if(e.target===e.currentTarget&&step<TUTORIAL_STEPS.length-1)setStep(step+1);}}>
+    <div className="tutorial-highlight" style={getHighlightStyle()}/>
+    <div className="tutorial-cursor" style={{left:cursorPos.x,top:cursorPos.y}}>👆</div>
+    <div className="tutorial-tooltip fadeUp" style={getTooltipStyle()}>
+      <div style={{fontSize:10,color:'#ff6b35',fontWeight:700,letterSpacing:1.5,marginBottom:6,fontFamily:'Outfit'}}>{step+1} / {TUTORIAL_STEPS.length}</div>
+      <div style={{fontSize:16,fontWeight:800,fontFamily:'Outfit',marginBottom:8}}>{s.title}</div>
+      <div style={{fontSize:13,color:'#b0b0b0',lineHeight:1.7,marginBottom:16}}>{s.desc}</div>
+      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+        {step>0&&<button onClick={()=>setStep(step-1)} style={{background:'transparent',color:'#888',border:'1px solid #333',borderRadius:10,padding:'8px 16px',fontSize:12,fontFamily:'DM Sans'}}>Back</button>}
+        {step<TUTORIAL_STEPS.length-1?
+          <button onClick={()=>setStep(step+1)} style={{background:'linear-gradient(135deg,#ff4d4d,#ff6b35)',color:'#fff',border:'none',borderRadius:10,padding:'8px 20px',fontSize:13,fontWeight:700,fontFamily:'Outfit',boxShadow:'0 4px 16px rgba(255,77,77,0.3)'}}>Next</button>
+          :<button onClick={onClose} style={{background:'linear-gradient(135deg,#00d4aa,#00b894)',color:'#000',border:'none',borderRadius:10,padding:'8px 20px',fontSize:13,fontWeight:700,fontFamily:'Outfit'}}>Get Started 🔥</button>
+        }
+        <button onClick={onClose} style={{background:'transparent',color:'#555',border:'none',fontSize:12,padding:'8px'}}>Skip</button>
+      </div>
+    </div>
+  </div>);}
+
+// ─── Help Menu ──────────────────────────────────────────────────────
+function HelpMenu({onFullTour,onTopic,onClose}){
+  const topics=[
+    {id:'trucks-tab',label:'Adding Trucks',icon:'🚛',step:1},
+    {id:'loads-tab',label:'Adding Loads',icon:'📦',step:2},
+    {id:'map-tab',label:'Using the Map',icon:'🗺️',step:3},
+    {id:'radius',label:'Radius Slider',icon:'📏',step:4},
+    {id:'equipment',label:'Equipment Filters',icon:'🔧',step:5},
+    {id:'matches-tab',label:'Viewing Matches',icon:'🔥',step:6},
+  ];
+  return(<div className="fadeUp" style={{position:'fixed',bottom:70,left:20,zIndex:9999,background:'var(--dark2)',border:'1px solid var(--dark3)',
+    borderRadius:18,padding:20,width:280,boxShadow:'0 12px 40px rgba(0,0,0,0.6)'}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+      <div style={{fontSize:16,fontWeight:800,fontFamily:'Outfit'}}>Help</div>
+      <button onClick={onClose} style={{background:'transparent',color:'#888',border:'none',fontSize:16}}>✕</button>
+    </div>
+    <button onClick={onFullTour} style={{width:'100%',padding:'12px',borderRadius:12,border:'none',fontSize:14,fontWeight:700,
+      fontFamily:'Outfit',background:'linear-gradient(135deg,#ff4d4d,#ff6b35)',color:'#fff',marginBottom:12,
+      boxShadow:'0 4px 16px rgba(255,77,77,0.3)'}}>🔥 Full Walkthrough</button>
+    <div style={{fontSize:11,color:'#555',fontWeight:700,letterSpacing:1,marginBottom:8}}>JUMP TO TOPIC</div>
+    {topics.map(t=>(<button key={t.id} onClick={()=>onTopic(t.step)}
+      style={{width:'100%',padding:'10px 12px',borderRadius:10,border:'1px solid var(--dark3)',background:'transparent',
+        color:'var(--text)',fontSize:13,fontFamily:'DM Sans',marginBottom:4,display:'flex',alignItems:'center',gap:10,textAlign:'left'}}>
+      <span style={{fontSize:18}}>{t.icon}</span>{t.label}
+    </button>))}
+  </div>);}
+
+// ─── Settings Panel ─────────────────────────────────────────────────
+function SettingsPanel({onClose,senderName,setSenderName,trucks,loads,matches,emailsSent}){
+  const[activeTab,setActiveTab]=useState('settings');
+  const totM=Object.values(matches).reduce((s,m)=>s+m.length,0);
+  const totalEmails=parseInt(localStorage.getItem('fm_emails_sent')||'0');
+
+  // Calculate workflow savings
+  const manualMinPerMatch=8; // minutes per match manually (call broker, cross-ref, email)
+  const autoMinPerMatch=0.5; // with app
+  const timeSavedMin=totM*(manualMinPerMatch-autoMinPerMatch);
+  const hourlyRate=35; // avg dispatcher rate $/hr
+  const moneySaved=Math.round((timeSavedMin/60)*hourlyRate);
+  const totalTrucks=trucks.length;const totalLoads=loads.length;
+
+  const st={label:{fontSize:11,color:'#555',fontWeight:700,letterSpacing:1,textTransform:'uppercase',marginBottom:6,display:'block'},
+    input:{width:'100%',background:'var(--dark)',border:'1px solid var(--dark3)',borderRadius:10,padding:'10px 14px',color:'var(--text)',fontSize:13,outline:'none',fontFamily:"'DM Sans'"}};
+
+  return(<div style={{position:'fixed',inset:0,zIndex:10000,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.7)'}}>
+    <div className="fadeUp" style={{width:680,maxWidth:'95vw',maxHeight:'90vh',background:'var(--dark2)',borderRadius:20,border:'1px solid var(--dark3)',overflow:'hidden',display:'flex',flexDirection:'column',boxShadow:'0 24px 64px rgba(0,0,0,0.6)'}}>
+      <div style={{padding:'18px 24px',borderBottom:'1px solid var(--dark3)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div style={{fontSize:18,fontWeight:800,fontFamily:'Outfit'}}>⚙️ Settings</div>
+        <button onClick={onClose} style={{background:'transparent',color:'#888',border:'none',fontSize:20}}>✕</button>
+      </div>
+      <div style={{display:'flex',borderBottom:'1px solid var(--dark3)'}}>
+        {[['settings','⚙️ General'],['workflow','📊 Workflow Benefits']].map(([id,label])=>(
+          <button key={id} onClick={()=>setActiveTab(id)} style={{flex:1,padding:'12px',border:'none',fontSize:13,fontWeight:activeTab===id?700:400,fontFamily:'Outfit',
+            background:activeTab===id?'rgba(255,77,77,0.08)':'transparent',color:activeTab===id?'#ff6b35':'#666',
+            borderBottom:activeTab===id?'2px solid #ff4d4d':'2px solid transparent'}}>{label}</button>))}
+      </div>
+      <div style={{flex:1,overflow:'auto',padding:24}}>
+
+        {activeTab==='settings'&&(<div style={{display:'flex',flexDirection:'column',gap:20}}>
+          <div><label style={st.label}>Your Name (email sign-off)</label>
+            <input value={senderName} onChange={e=>{setSenderName(e.target.value);localStorage.setItem('fm_sender',e.target.value);}}
+              style={st.input} placeholder="Alec"/></div>
+          <div><label style={st.label}>Default Radius (miles)</label>
+            <input type="number" defaultValue={parseInt(localStorage.getItem('fm_radius'))||100}
+              onChange={e=>{localStorage.setItem('fm_radius',e.target.value);}} style={st.input}/></div>
+          <div><label style={st.label}>DeepSeek API Key</label>
+            <div style={{display:'flex',gap:8}}>
+              <input type="password" value={localStorage.getItem('fm_key')||''} readOnly style={{...st.input,flex:1,color:'#555'}}/>
+              <button onClick={()=>{if(confirm('Change API key?')){localStorage.removeItem('fm_key');location.reload();}}}
+                style={{background:'var(--dark)',color:'#ff6b35',border:'1px solid var(--dark3)',borderRadius:10,padding:'10px 16px',fontSize:12,fontWeight:600,whiteSpace:'nowrap'}}>Change Key</button>
+            </div></div>
+          <div style={{borderTop:'1px solid var(--dark3)',paddingTop:16}}>
+            <label style={st.label}>Session Data</label>
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={()=>{const data={trucks,loads,settings:{senderName,radius:localStorage.getItem('fm_radius')}};
+                const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);
+                const a=document.createElement('a');a.href=url;a.download=`freight-matcher-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();
+                showToast('Session exported','success');}}
+                style={{background:'rgba(0,212,170,0.1)',color:'#00d4aa',border:'1px solid rgba(0,212,170,0.2)',borderRadius:10,padding:'10px 16px',fontSize:12,fontWeight:600}}>
+                📥 Export Session</button>
+              <button onClick={()=>{const input=document.createElement('input');input.type='file';input.accept='.json';
+                input.onchange=e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();
+                  reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);
+                    if(data.trucks)localStorage.setItem('fm_trucks',JSON.stringify(data.trucks));
+                    if(data.loads)localStorage.setItem('fm_loads',JSON.stringify(data.loads));
+                    if(data.settings?.senderName)localStorage.setItem('fm_sender',data.settings.senderName);
+                    if(data.settings?.radius)localStorage.setItem('fm_radius',data.settings.radius);
+                    showToast('Session imported — reloading...','success');setTimeout(()=>location.reload(),1000);
+                  }catch{showToast('Invalid file','error');}};reader.readAsText(file);};input.click();}}
+                style={{background:'rgba(77,166,255,0.1)',color:'#4da6ff',border:'1px solid rgba(77,166,255,0.2)',borderRadius:10,padding:'10px 16px',fontSize:12,fontWeight:600}}>
+                📤 Import Session</button>
+              <button onClick={()=>{if(confirm('Reset all stats?')){localStorage.removeItem('fm_emails_sent');localStorage.removeItem('fm_matches_made');showToast('Stats reset','info');}}}
+                style={{background:'rgba(179,136,255,0.1)',color:'#b388ff',border:'1px solid rgba(179,136,255,0.2)',borderRadius:10,padding:'10px 16px',fontSize:12,fontWeight:600}}>
+                🔄 Reset Stats</button>
+            </div>
+          </div>
+        </div>)}
+
+        {activeTab==='workflow'&&(<div>
+          {/* BEFORE section */}
+          <div style={{background:'rgba(255,77,77,0.04)',border:'1px solid rgba(255,77,77,0.15)',borderRadius:16,padding:20,marginBottom:16}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <div><span style={{background:'#ff4d4d',color:'#fff',padding:'3px 10px',borderRadius:6,fontSize:11,fontWeight:700,marginRight:8}}>BEFORE</span>
+                <span style={{fontWeight:700,fontSize:15,fontFamily:'Outfit'}}>Manual Process</span></div>
+              <div style={{display:'flex',gap:10}}>
+                <span style={{fontSize:12,color:'#ff4d4d',fontWeight:600}}>⏱ 45-60 min</span>
+                <span style={{fontSize:12,color:'#ff4d4d',fontWeight:600}}>📋 8+ Steps</span></div>
+            </div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'center'}}>
+              {[['📞','Search load boards','10 min'],['📋','Cross-reference trucks','15 min'],['📧','Write individual emails','10 min'],
+                ['⏳','Wait for responses','15 min'],['📞','Follow up calls','5 min'],['📝','Log matches manually','5 min']].map(([icon,label,time],i)=>(
+                <div key={i} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,width:90}}>
+                  <div style={{width:40,height:40,borderRadius:'50%',background:'rgba(255,77,77,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{icon}</div>
+                  <div style={{fontSize:9,color:'#888',textAlign:'center',lineHeight:1.3}}>{label}</div>
+                  <div style={{fontSize:10,color:'#ff4d4d',fontWeight:600}}>{time}</div>
+                </div>))}
+            </div>
+            <div style={{display:'flex',gap:16,justifyContent:'center',marginTop:14,paddingTop:12,borderTop:'1px solid rgba(255,77,77,0.1)'}}>
+              {['⏳ Lots of waiting','📞 Multiple calls','⚠️ Error-prone','📝 Manual data entry'].map((t,i)=>(
+                <span key={i} style={{fontSize:10,color:'#ff4d4d88'}}>{t}</span>))}
+            </div>
+          </div>
+
+          {/* Arrow */}
+          <div style={{textAlign:'center',margin:'8px 0'}}>
+            <div style={{display:'inline-block',background:'linear-gradient(135deg,#00d4aa,#00b894)',color:'#000',padding:'6px 20px',borderRadius:10,fontSize:13,fontWeight:800,fontFamily:'Outfit'}}>
+              ⚡ {Math.round((1-autoMinPerMatch/manualMinPerMatch)*100)}% FASTER</div>
+          </div>
+
+          {/* AFTER section */}
+          <div style={{background:'rgba(0,212,170,0.04)',border:'1px solid rgba(0,212,170,0.15)',borderRadius:16,padding:20,marginBottom:20}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <div><span style={{background:'#00d4aa',color:'#000',padding:'3px 10px',borderRadius:6,fontSize:11,fontWeight:700,marginRight:8}}>AFTER</span>
+                <span style={{fontWeight:700,fontSize:15,fontFamily:'Outfit'}}>With Freight Matcher</span></div>
+              <div style={{display:'flex',gap:10}}>
+                <span style={{fontSize:12,color:'#00d4aa',fontWeight:600}}>⏱ 5-10 min</span>
+                <span style={{fontSize:12,color:'#00d4aa',fontWeight:600}}>✅ 3 Steps</span></div>
+            </div>
+            <div style={{display:'flex',gap:20,justifyContent:'center',alignItems:'center'}}>
+              {[['📋','Paste trucks & loads','2 min','Instant AI parsing'],['🔥','Auto-match','Instant','Region & lane aware'],['📧','One-click email','1 min','Image table included']].map(([icon,label,time,sub],i)=>(
+                <React.Fragment key={i}>
+                  <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+                    <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(0,212,170,0.12)',border:'2px solid rgba(0,212,170,0.3)',
+                      display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>{icon}</div>
+                    <div style={{fontSize:11,fontWeight:600,color:'#fafafa',textAlign:'center'}}>{label}</div>
+                    <div style={{fontSize:10,color:'#00d4aa',fontWeight:600}}>{time}</div>
+                    <div style={{fontSize:9,color:'#555',textAlign:'center'}}>{sub}</div>
+                  </div>
+                  {i<2&&<div style={{color:'#333',fontSize:20}}>→</div>}
+                </React.Fragment>))}
+            </div>
+          </div>
+
+          {/* Your stats */}
+          <div style={{background:'var(--dark)',borderRadius:16,border:'1px solid var(--dark3)',padding:20}}>
+            <div style={{fontSize:13,fontWeight:700,fontFamily:'Outfit',marginBottom:14,color:'#ffb347'}}>📊 Your Session Stats</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
+              {[[totalTrucks,'Trucks\nLoaded','#ff8c42'],[totalLoads,'Loads\nImported','#4da6ff'],[totM,'Matches\nFound','#00d4aa'],[totalEmails,'Emails\nSent','#b388ff']].map(([val,label,color],i)=>(
+                <div key={i} style={{textAlign:'center',padding:14,borderRadius:12,background:color+'08',border:`1px solid ${color}22`}}>
+                  <div style={{fontSize:28,fontWeight:800,color,fontFamily:'Outfit'}}>{val}</div>
+                  <div style={{fontSize:10,color:'#888',whiteSpace:'pre-line',lineHeight:1.3,marginTop:4}}>{label}</div>
+                </div>))}
+            </div>
+            {totM>0&&(<div style={{marginTop:16,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
+              <div style={{textAlign:'center',padding:14,borderRadius:12,background:'rgba(0,212,170,0.06)',border:'1px solid rgba(0,212,170,0.15)'}}>
+                <div style={{fontSize:22,fontWeight:800,color:'#00d4aa',fontFamily:'Outfit'}}>{Math.round(timeSavedMin)} min</div>
+                <div style={{fontSize:10,color:'#888',marginTop:2}}>TIME SAVED</div></div>
+              <div style={{textAlign:'center',padding:14,borderRadius:12,background:'rgba(0,212,170,0.06)',border:'1px solid rgba(0,212,170,0.15)'}}>
+                <div style={{fontSize:22,fontWeight:800,color:'#00d4aa',fontFamily:'Outfit'}}>${moneySaved}</div>
+                <div style={{fontSize:10,color:'#888',marginTop:2}}>ESTIMATED VALUE</div>
+                <div style={{fontSize:9,color:'#555',marginTop:1}}>@ ${hourlyRate}/hr</div></div>
+              <div style={{textAlign:'center',padding:14,borderRadius:12,background:'rgba(0,212,170,0.06)',border:'1px solid rgba(0,212,170,0.15)'}}>
+                <div style={{fontSize:22,fontWeight:800,color:'#00d4aa',fontFamily:'Outfit'}}>{Math.round((1-autoMinPerMatch/manualMinPerMatch)*100)}%</div>
+                <div style={{fontSize:10,color:'#888',marginTop:2}}>FASTER</div></div>
+            </div>)}
+            {totM>0&&<div style={{marginTop:14,textAlign:'center',padding:12,borderRadius:12,background:'rgba(255,179,71,0.06)',border:'1px solid rgba(255,179,71,0.15)'}}>
+              <div style={{fontSize:12,color:'#ffb347',fontStyle:'italic'}}>
+                "What used to take <strong>{Math.round(totM*manualMinPerMatch)} minutes</strong> of calls and emails now takes <strong>{Math.round(totM*autoMinPerMatch)} minutes</strong> — automatically."</div></div>}
+          </div>
+        </div>)}
+      </div>
+    </div>
+  </div>);}
+
+// ─── UI Components ──────────────────────────────────────────────────
+function Badge({children,color='#ff8c42',small}){
+  return <span style={{display:"inline-block",padding:small?"2px 8px":"3px 12px",borderRadius:99,fontSize:small?10:11,fontWeight:600,background:color+"18",color}}>{children}</span>}
+function Tab({active,onClick,children,count,dtab}){
+  return <button data-tab={dtab} onClick={onClick} style={{padding:"12px 22px",border:"none",
+    background:active?'linear-gradient(135deg,rgba(255,77,77,0.15),rgba(255,107,53,0.1))':'transparent',
+    color:active?'#ff6b35':'#666',borderBottom:active?'2px solid #ff4d4d':'2px solid transparent',
+    fontSize:14,fontWeight:active?700:500,fontFamily:'Outfit,sans-serif',display:"flex",alignItems:"center",gap:8}}>
+    {children}{count!=null&&<span style={{background:active?'linear-gradient(135deg,#ff4d4d,#ff6b35)':'#333',
+      color:active?'#fff':'#888',borderRadius:99,padding:"1px 8px",fontSize:10,fontWeight:700}}>{count}</span>}
+  </button>}
+function Spin(){return <span style={{display:"inline-block",width:14,height:14,border:'2px solid rgba(255,77,77,0.2)',borderTop:'2px solid #ff4d4d',borderRadius:"50%"}} className="spin"/>}
+
+function AIInput({placeholder,btnLabel,onParse,parsing,icon,clearKey}){const[text,setText]=useState("");
+  // Auto-clear when clearKey changes (after successful parse)
+  const prevKey=useRef(clearKey);
+  useEffect(()=>{if(clearKey!==prevKey.current){setText("");prevKey.current=clearKey;}},[clearKey]);
+  return(<div style={{background:'var(--dark2)',borderRadius:16,border:`1px solid ${parsing?'#ff4d4d44':'var(--dark3)'}`,overflow:"hidden"}}>
+    <div style={{padding:"16px 18px 10px",display:"flex",alignItems:"center",gap:10}}>
+      <span style={{fontSize:20}}>{icon}</span><span style={{fontSize:14,fontWeight:600,fontFamily:'Outfit'}}>Paste anything — AI handles it</span>{parsing&&<Spin/>}
+    </div>
+    <textarea value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)&&text.trim()&&!parsing)onParse(text);}}
+      placeholder={placeholder} style={{width:"100%",background:"transparent",border:"none",padding:"8px 18px 14px",color:'var(--text)',fontSize:13,lineHeight:1.7,resize:"vertical",minHeight:180,maxHeight:400,outline:"none",fontFamily:"'DM Sans'"}}/>
+    <div style={{padding:"10px 18px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:'1px solid var(--dark3)'}}>
+      <span style={{fontSize:11,color:'#555'}}>{text.trim()?`${text.split(/\n/).filter(l=>l.trim()).length} lines`:"⌘+Enter"}</span>
+      <div style={{display:"flex",gap:8}}>
+        {text.trim()&&<button onClick={()=>setText("")} style={{background:"transparent",color:'#666',border:'1px solid var(--dark3)',borderRadius:10,padding:"7px 16px",fontSize:12}}>Clear</button>}
+        <button onClick={()=>{if(text.trim()&&!parsing)onParse(text);}} disabled={!text.trim()||parsing}
+          style={{background:text.trim()&&!parsing?'linear-gradient(135deg,#ff4d4d,#ff6b35)':'var(--dark3)',color:text.trim()&&!parsing?'#fff':'#555',border:"none",borderRadius:10,padding:"7px 20px",fontSize:13,fontWeight:700,fontFamily:'Outfit',
+            boxShadow:text.trim()&&!parsing?'0 4px 16px rgba(255,77,77,0.3)':'none',display:"flex",alignItems:"center",gap:6}}>
+          {parsing?<><Spin/> Parsing...</>:btnLabel}</button></div></div></div>);}
+
+function Preview({items,type,onAccept,onReject,onRemove}){const isL=type==="load";
+  return(<div className="fadeUp" style={{background:'var(--dark)',borderRadius:16,border:'1px solid rgba(0,212,170,0.3)',overflow:"hidden",marginTop:16}}>
+    <div style={{padding:"14px 18px",background:'rgba(0,212,170,0.06)',borderBottom:'1px solid rgba(0,212,170,0.2)',display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <span style={{fontSize:14,fontWeight:700,color:'#00d4aa',fontFamily:'Outfit'}}>🔥 Found {items.length} {type}{items.length!==1?"s":""}</span>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={onReject} style={{background:"transparent",color:'#666',border:'1px solid var(--dark3)',borderRadius:10,padding:"6px 14px",fontSize:12}}>Discard</button>
+        <button onClick={onAccept} style={{background:'linear-gradient(135deg,#00d4aa,#00b894)',color:'#000',border:"none",borderRadius:10,padding:"6px 18px",fontSize:13,fontWeight:700,fontFamily:'Outfit'}}>Add All</button></div></div>
+    <div style={{maxHeight:400,overflow:"auto"}}>{items.map((item,i)=>(<div key={i} style={{padding:"12px 18px",borderBottom:'1px solid var(--dark3)',display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div style={{flex:1}}>
+        <div style={{fontWeight:600,fontSize:14,fontFamily:'Outfit'}}>{isL?`${item.origin} → ${item.destination}`:item.location}
+          {!isL&&(item.preferred_destinations||[]).length>0&&<span style={{color:'#00bcd4',fontSize:12}}> → {item.preferred_destinations.join(', ')}</span>}</div>
+        <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap"}}>
+          <Badge color={EC[item.equipment]} small>{item.equipment}</Badge>
+          {item.available&&<Badge color="#ffb347" small>{item.available}</Badge>}
+          {item.carrier&&<Badge color="#00bcd4" small>{item.carrier}</Badge>}
+          {item.rate&&<Badge color="#00d4aa" small>${item.rate}</Badge>}
+          {item.pickup_date&&<Badge color="#b388ff" small>{item.pickup_date}</Badge>}</div></div>
+      <button onClick={()=>onRemove(i)} style={{background:"transparent",color:'#ff4d4d',border:'1px solid #ff4d4d33',borderRadius:8,padding:"4px 10px",fontSize:12,marginLeft:8}}>✕</button>
+    </div>))}</div></div>);}
+
+function Err({msg,onClose}){if(!msg)return null;
+  return(<div className="fadeUp" style={{background:'rgba(255,77,77,0.08)',border:'1px solid rgba(255,77,77,0.3)',borderRadius:12,padding:"12px 18px",marginTop:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+    <div style={{fontSize:13,color:'#ff4d4d'}}>{msg}</div><button onClick={onClose} style={{background:"transparent",color:'#ff4d4d',border:"none",fontSize:16}}>✕</button></div>);}
+
+function KeyScreen({onSave}){const[key,setKey]=useState("");const[testing,setTesting]=useState(false);const[err,setErr]=useState("");
+  const go=async()=>{if(!key.trim())return;setTesting(true);setErr("");
+    try{const r=await fetch("https://api.deepseek.com/chat/completions",{method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+key.trim()},
+      body:JSON.stringify({model:"deepseek-chat",max_tokens:10,messages:[{role:"user",content:"Hi"}]})});
+      if(r.status===401){setErr("Invalid API key. Check your key at platform.deepseek.com");return;}
+      if(!r.ok){const e=await r.json().catch(()=>({}));setErr(e.error?.message||"Connection error.");return;}
+      localStorage.setItem("fm_key",key.trim());onSave();
+    }catch{setErr("Connection error. Check your internet.");}finally{setTesting(false);}};
+  return(<div style={{position:"fixed",inset:0,background:'var(--dark)',display:"flex",alignItems:"center",justifyContent:"center",backgroundImage:'radial-gradient(ellipse at 50% 0%,rgba(255,77,77,0.08) 0%,transparent 60%)'}}>
+    <div style={{maxWidth:480,width:"90%"}} className="fadeUp">
+      <div style={{textAlign:"center",marginBottom:40}}>
+        <div style={{fontSize:64,marginBottom:12,filter:'drop-shadow(0 0 20px rgba(255,77,77,0.4))'}}>🔥</div>
+        <div style={{fontSize:36,fontWeight:900,fontFamily:'Outfit',background:'linear-gradient(135deg,#ff4d4d,#ff6b35,#ffb347)',WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Freight Matcher</div>
+        <div style={{fontSize:14,color:'#666',marginTop:6,fontFamily:'Outfit'}}>Where loads meet trucks</div></div>
+      <div style={{background:'var(--dark2)',borderRadius:20,padding:30,border:'1px solid var(--dark3)'}}>
+        <div style={{fontSize:11,color:'#555',fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>API KEY</div>
+        <input type="password" value={key} onChange={e=>{setKey(e.target.value);setErr("");}} onKeyDown={e=>{if(e.key==="Enter")go();}} placeholder="sk-..."
+          style={{width:"100%",background:'var(--dark)',border:'1px solid var(--dark3)',borderRadius:12,padding:"14px 18px",color:'var(--text)',fontSize:15,outline:"none"}}/>
+        {err&&<div style={{fontSize:13,color:'#ff4d4d',marginTop:10}}>{err}</div>}
+        <button onClick={go} disabled={!key.trim()||testing} style={{width:"100%",marginTop:16,padding:"16px",borderRadius:14,border:"none",fontSize:16,fontWeight:800,fontFamily:'Outfit',
+          background:key.trim()&&!testing?'linear-gradient(135deg,#ff4d4d,#ff6b35)':'var(--dark3)',color:key.trim()&&!testing?'#fff':'#555',
+          boxShadow:key.trim()&&!testing?'0 6px 24px rgba(255,77,77,0.35)':'none',display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          {testing?<><Spin/> Connecting...</>:"🔥 Light it up"}</button>
+        <div style={{marginTop:14,fontSize:12,color:'#555',textAlign:'center'}}>Get a free key at <span style={{color:'#ff6b35'}}>platform.deepseek.com</span> — 5M tokens free, no card needed</div></div></div></div>);}
+
+// ─── App ────────────────────────────────────────────────────────────
+function App(){
+  const[hasKey,setHasKey]=useState(!!localStorage.getItem("fm_key"));
+  const[tab,setTab]=useState("trucks");const prevTab=useRef("trucks");
+  const session=useRef(loadSession());
+  // Dedup persisted data on load
+  const dedupTrucks=(arr)=>{const m=new Map();arr.forEach(t=>{const k=`${(t.location||'').toLowerCase().trim()}|${(t.carrier||'').toLowerCase().trim()}`;
+    if(!m.has(k))m.set(k,t);else{const e=m.get(k);(t.preferred_destinations||[]).forEach(d=>{if(!(e.preferred_destinations||[]).includes(d))(e.preferred_destinations=e.preferred_destinations||[]).push(d);});
+      if(t.available&&!e.available)e.available=t.available;}});return[...m.values()];};
+  const dedupLoads=(arr)=>{const m=new Map();arr.forEach(l=>{const k=`${(l.origin||'').toLowerCase()}|${(l.destination||'').toLowerCase()}|${l.pickup_date||''}|${l.pickup_time||''}`;
+    if(!m.has(k))m.set(k,l);});return[...m.values()];};
+  const[trucks,setTrucks]=useState(()=>dedupTrucks(session.current.trucks));
+  const[loads,setLoads]=useState(()=>dedupLoads(session.current.loads));
+  const[radius,setRadius]=useState(parseInt(localStorage.getItem('fm_radius'))||100);const[selTruck,setSelTruck]=useState(null);
+  const[eqF,setEqF]=useState(new Set(EQ_ALL));const[minWt,setMinWt]=useState(0);const[showMoreEq,setShowMoreEq]=useState(false);
+  const[tP,setTP]=useState(false);const[pT,setPT]=useState(null);const[tE,setTE]=useState("");const[tClear,setTClear]=useState(0);
+  const[lP,setLP]=useState(false);const[pL,setPL]=useState(null);const[lE,setLE]=useState("");const[lProg,setLProg]=useState("");const[lClear,setLClear]=useState(0);
+  const[mapSplash,setMapSplash]=useState(false);
+  const[showTutorial,setShowTutorial]=useState(false);const[tutStep,setTutStep]=useState(0);
+  const[showHelp,setShowHelp]=useState(false);const[showSettings,setShowSettings]=useState(false);
+  const[senderName,setSenderName]=useState(localStorage.getItem('fm_sender')||'Alec');
+  const[emailsSent,setEmailsSent]=useState(parseInt(localStorage.getItem('fm_emails_sent'))||0);
+  const[matchesMade,setMatchesMade]=useState(parseInt(localStorage.getItem('fm_matches_made'))||0);
+
+  // Auto-save trucks/loads/radius to localStorage
+  useEffect(()=>{saveSession(trucks,loads);},[trucks,loads]);
+  useEffect(()=>{localStorage.setItem('fm_radius',radius);},[radius]);
+  useEffect(()=>{const h=()=>setEmailsSent(parseInt(localStorage.getItem('fm_emails_sent')||'0'));
+    window.addEventListener('fm-email-sent',h);return()=>window.removeEventListener('fm-email-sent',h);},[]);
+
+  useEffect(()=>{if(tab==="map"&&prevTab.current!=="map"){const tot=Object.values(matches).reduce((s,m)=>s+m.length,0);
+    if(tot>0){setMapSplash(true);setTimeout(()=>setMapSplash(false),1200);}}prevTab.current=tab;},[tab]);
+
+  // ─── Region definitions ────────────────────────────────────────────
+  const REGIONS={
+    "midwest":["IL","IN","IA","KS","MI","MN","MO","NE","ND","OH","SD","WI"],
+    "east coast":["CT","DE","FL","GA","ME","MD","MA","NH","NJ","NY","NC","PA","RI","SC","VA","VT","WV","DC"],
+    "eastern":["CT","DE","FL","GA","ME","MD","MA","NH","NJ","NY","NC","PA","RI","SC","VA","VT","WV","DC"],
+    "northeast":["CT","DE","ME","MD","MA","NH","NJ","NY","PA","RI","VT","DC"],
+    "southeast":["AL","AR","FL","GA","KY","LA","MS","NC","SC","TN","VA","WV"],
+    "south":["AL","AR","FL","GA","KY","LA","MS","NC","OK","SC","TN","TX","VA","WV"],
+    "southwest":["AZ","NM","NV","TX","OK","UT","CO"],
+    "west coast":["CA","OR","WA"],
+    "western":["AZ","CA","CO","ID","MT","NM","NV","OR","UT","WA","WY"],
+    "northwest":["ID","MT","OR","WA","WY"],
+    "pacific northwest":["OR","WA","ID"],
+    "pnw":["OR","WA","ID"],
+    "great lakes":["IL","IN","MI","MN","OH","WI"],
+    "plains":["IA","KS","MN","MO","NE","ND","SD"],
+    "mountain":["CO","ID","MT","NV","UT","WY"],
+    "new england":["CT","ME","MA","NH","RI","VT"],
+    "mid-atlantic":["DE","MD","NJ","NY","PA","DC"],
+    "gulf":["AL","FL","LA","MS","TX"],
+    "texas":["TX"],"california":["CA"],"florida":["FL"],
+  };
+
+  // Extract state from "City, ST" format
+  function getState(loc){if(!loc)return null;const parts=loc.split(",");if(parts.length<2)return null;return parts[parts.length-1].trim().toUpperCase();}
+
+  // Check if a load's destination matches a regional preference
+  function matchesRegion(loadDest,prefDest){
+    const regionKey=prefDest.toLowerCase().trim();
+    const states=REGIONS[regionKey];
+    if(!states)return false;
+    const destState=getState(loadDest);
+    if(!destState)return false;
+    return states.includes(destState);
+  }
+
+  // Lane-aware matching engine (with region support)
+  const matches=useMemo(()=>{const r={};
+    for(const truck of trucks){if(!truck.coords||!eqF.has(truck.equipment))continue;const tm=[];
+      const hasLanes=(truck.preferred_destinations||[]).length>0;
+      // Pre-compute preferred destination coords (may be null for regions)
+      const laneDests=hasLanes?truck.preferred_destinations.map(d=>{
+        const coords=geo(d);
+        const isRegion=REGIONS[d.toLowerCase().trim()]?true:false;
+        return{name:d,coords,isRegion};
+      }):[];
+
+      for(const load of loads){if(!load.oc)continue;
+        // Equipment compatibility
+        // Van/Reefer loads can go on either Van or Reefer trucks
+        // Trailer loads can go on any van-type truck
+        const vanTypes=["Van/Dry Van","Reefer","Van/Reefer","Trailer"];
+        let eqMatch=false;
+        if(load.equipment===truck.equipment) eqMatch=true;
+        // Van/Reefer load matches both Van and Reefer trucks
+        else if(load.equipment==="Van/Reefer"&&(truck.equipment==="Van/Dry Van"||truck.equipment==="Reefer")) eqMatch=true;
+        // Reefer truck can haul Van/Dry Van loads (reefer can run dry)
+        else if(truck.equipment==="Reefer"&&(load.equipment==="Van/Dry Van"||load.equipment==="Trailer")) eqMatch=true;
+        // Trailer loads match any van-type truck
+        else if(load.equipment==="Trailer"&&vanTypes.includes(truck.equipment)) eqMatch=true;
+        if(!eqMatch)continue;
+        if(load.weight>truck.weight)continue;if(load.weight<minWt&&minWt>0)continue;
+
+        // Distance from truck to load origin
+        const originDist=hav(truck.coords.lat,truck.coords.lng,load.oc.lat,load.oc.lng);
+        if(originDist>radius)continue;
+
+        // If truck has NO preferred lanes → standard radius match (any direction)
+        if(!hasLanes){
+          tm.push({loadId:load.id,distance:Math.round(originDist),load,laneMatch:false});
+          continue;
+        }
+
+        // If truck HAS preferred lanes → load destination must align with a lane
+        if(!load.dc&&!load.destination)continue;
+
+        let bestLaneScore=0;
+        for(const lane of laneDests){
+          // REGION MATCH: check if load destination state is in the region
+          if(lane.isRegion){
+            if(matchesRegion(load.destination,lane.name)){
+              bestLaneScore=Math.max(bestLaneScore,0.8); // strong match
+            }
+            continue;
+          }
+
+          // CITY-TO-CITY MATCH: original lane logic
+          if(!lane.coords||!load.dc)continue;
+          const laneLen=hav(truck.coords.lat,truck.coords.lng,lane.coords.lat,lane.coords.lng);
+          if(laneLen<5)continue;
+
+          const destToLane=hav(load.dc.lat,load.dc.lng,lane.coords.lat,lane.coords.lng);
+          const destToTruck=hav(load.dc.lat,load.dc.lng,truck.coords.lat,truck.coords.lng);
+
+          const isAlongLane = (destToLane <= laneLen * 0.5) ||
+            (destToTruck <= laneLen && destToLane <= laneLen);
+          const goingWrongWay = destToLane > laneLen * 1.3 && destToTruck > laneLen * 0.3;
+
+          if(isAlongLane && !goingWrongWay){
+            const score = 1 - (destToLane / (laneLen + 1));
+            if(score > bestLaneScore) bestLaneScore = score;
+          }
+        }
+
+        if(bestLaneScore > 0){
+          tm.push({loadId:load.id,distance:Math.round(originDist),load,laneMatch:true,laneScore:bestLaneScore});
+        }
+      }
+      // Sort: lane matches first (by score), then by distance
+      tm.sort((a,b)=>{
+        if(a.laneMatch&&!b.laneMatch)return -1;if(!a.laneMatch&&b.laneMatch)return 1;
+        if(a.laneMatch&&b.laneMatch)return(b.laneScore||0)-(a.laneScore||0);
+        return a.distance-b.distance;
+      });
+      if(tm.length>0)r[truck.id]=tm;}return r;
+  },[trucks,loads,radius,eqF,minWt]);
+  const totM=Object.values(matches).reduce((s,m)=>s+m.length,0);
+  // Track cumulative matches for stats
+  useEffect(()=>{if(totM>0){const prev=parseInt(localStorage.getItem('fm_matches_made')||'0');
+    if(totM>prev){localStorage.setItem('fm_matches_made',totM);setMatchesMade(totM);}}},[totM]);
+
+  const parseTrucks=async(text)=>{setTP(true);setTE("");try{const res=await callChunked(TRUCK_SYS,text);if(!Array.isArray(res)||!res.length){setTE("No trucks found.");return;}
+      setPT(res);setTClear(c=>c+1);showToast(`Found ${res.length} truck${res.length!==1?'s':''}!`,'info');
+    }catch(e){if(e.message==="NO_KEY"){setHasKey(false);return;}setTE(e.message);}finally{setTP(false);}};
+  const acceptT=()=>{
+    // Dedup: same location + carrier = same truck. Merge preferred_destinations and dates.
+    const merged=new Map();
+    pT.forEach(t=>{
+      const key=`${(t.location||'').toLowerCase().trim()}|${(t.carrier||'').toLowerCase().trim()}`;
+      if(merged.has(key)){
+        const existing=merged.get(key);
+        // Merge preferred destinations
+        (t.preferred_destinations||[]).forEach(d=>{if(!existing.preferred_destinations.includes(d))existing.preferred_destinations.push(d);});
+        // Keep earliest available date or combine
+        if(t.available&&!existing.available)existing.available=t.available;
+        else if(t.available&&existing.available&&t.available!==existing.available)existing.available=existing.available+', '+t.available;
+        // Merge notes
+        if(t.notes&&!existing.notes)existing.notes=t.notes;
+      } else {
+        merged.set(key,{...t,preferred_destinations:[...(t.preferred_destinations||[])]});
+      }
+    });
+    const deduped=[...merged.values()];
+    // Also dedup against existing trucks in state
+    const existingKeys=new Set(trucks.map(t=>`${t.location.toLowerCase().trim()}|${(t.carrier||'').toLowerCase().trim()}`));
+    const fresh=deduped.filter(t=>{
+      const key=`${(t.location||'').toLowerCase().trim()}|${(t.carrier||'').toLowerCase().trim()}`;
+      return!existingKeys.has(key);
+    });
+    const skipped=pT.length-fresh.length;
+    if(fresh.length>0){
+      setTrucks(p=>[...p,...fresh.map(t=>({id:`t-${Date.now()}-${Math.random().toString(36).substr(2,6)}`,
+      location:t.location,equipment:EQ_ALL.includes(t.equipment)?t.equipment:"Van/Dry Van",weight:t.weight||45000,
+      driver:t.driver||"",carrier:t.carrier||"",available:t.available||"",preferred_destinations:t.preferred_destinations||[],notes:t.notes||"",coords:geo(t.location)}))]);
+    }
+    setPT(null);
+    showToast(`Added ${fresh.length} truck${fresh.length!==1?'s':''}${skipped>0?` (${skipped} duplicate${skipped!==1?'s':''} merged)`:''}`,'success');};
+
+  // Background geocoder — finds trucks/loads without coords and geocodes them via Nominatim
+  const geocodingRef=useRef(false);const[geocoding,setGeocoding]=useState(false);const[geoProgress,setGeoProgress]=useState('');
+  useEffect(()=>{
+    if(geocodingRef.current)return;
+    const missingTrucks=trucks.filter(t=>!t.coords&&t.location);
+    const missingLoadOrigins=loads.filter(l=>!l.oc&&l.origin);
+    const missingLoadDests=loads.filter(l=>!l.dc&&l.destination);
+    const total=missingTrucks.length+missingLoadOrigins.length+missingLoadDests.length;
+    if(total===0){setGeocoding(false);return;}
+    geocodingRef.current=true;setGeocoding(true);
+    (async()=>{
+      let updated=false;let done=0;
+      for(const t of missingTrucks){
+        setGeoProgress(`🗺️ Geocoding ${++done}/${total}: ${t.location}`);
+        const coords=await geoNominatim(t.location);
+        if(coords){setTrucks(prev=>prev.map(x=>x.id===t.id?{...x,coords}:x));updated=true;}
+      }
+      for(const l of missingLoadOrigins){
+        setGeoProgress(`🗺️ Geocoding ${++done}/${total}: ${l.origin}`);
+        const oc=await geoNominatim(l.origin);
+        if(oc){setLoads(prev=>prev.map(x=>x.id===l.id?{...x,oc}:x));updated=true;}
+      }
+      for(const l of missingLoadDests){
+        setGeoProgress(`🗺️ Geocoding ${++done}/${total}: ${l.destination}`);
+        const dc=await geoNominatim(l.destination);
+        if(dc){setLoads(prev=>prev.map(x=>x.id===l.id?{...x,dc:x.dc||dc}:x));updated=true;}
+      }
+      if(updated)showToast('🗺️ Map updated with geocoded locations','info',2000);
+      geocodingRef.current=false;setGeocoding(false);setGeoProgress('');
+    })();
+  },[trucks,loads]);
+
+  const parseLoads=async(text)=>{setLP(true);setLE("");setLProg("");
+    try{
+      const local=tryLocalParse(text);
+      if(local&&local.length>0){
+        setLProg(`⚡ Parsed ${local.length} loads instantly`);
+        setTimeout(()=>setLProg(""),2500);
+        setPL(local);setLClear(c=>c+1);showToast(`⚡ ${local.length} loads parsed instantly — no API cost`,'success');return;
+      }
+      setLProg("Sending to AI...");
+      const res=await callChunked(LOAD_SYS,text,(i,n)=>{if(n>1)setLProg(`AI batch ${i}/${n}`);});
+      setLProg("");
+      if(!Array.isArray(res)||!res.length){setLE("No loads found.");return;}
+      setPL(res);setLClear(c=>c+1);showToast(`Found ${res.length} load${res.length!==1?'s':''}!`,'info');
+    }catch(e){setLProg("");if(e.message==="NO_KEY"){setHasKey(false);return;}setLE(e.message);}finally{setLP(false);}};
+  const acceptL=()=>{
+    // Dedup loads: same origin + dest + pickup date + time = duplicate
+    const seen=new Set();const deduped=[];
+    pL.forEach(l=>{
+      const key=`${(l.origin||'').toLowerCase()}|${(l.destination||'').toLowerCase()}|${l.pickup_date||''}|${l.pickup_time||''}`;
+      if(!seen.has(key)){seen.add(key);deduped.push(l);}
+    });
+    // Also dedup against existing loads
+    const existingKeys=new Set(loads.map(l=>`${l.origin.toLowerCase()}|${l.destination.toLowerCase()}|${l.pickup_date||''}|${l.pickup_time||''}`));
+    const fresh=deduped.filter(l=>{
+      const key=`${(l.origin||'').toLowerCase()}|${(l.destination||'').toLowerCase()}|${l.pickup_date||''}|${l.pickup_time||''}`;
+      return!existingKeys.has(key);
+    });
+    const skipped=pL.length-fresh.length;
+    if(fresh.length>0){
+      setLoads(p=>[...p,...fresh.map(l=>({id:`l-${Date.now()}-${Math.random().toString(36).substr(2,6)}`,
+      origin:l.origin,destination:l.destination,equipment:EQ_ALL.includes(l.equipment)?l.equipment:"Van/Dry Van",
+      weight:l.weight||40000,rate:l.rate||"",pickup_date:l.pickup_date||"",pickup_time:l.pickup_time||"",delivery_date:l.delivery_date||"",delivery_time:l.delivery_time||"",notes:l.notes||"",
+      oc:geo(l.origin),dc:geo(l.destination)}))]);
+    }
+    setPL(null);
+    showToast(`Added ${fresh.length} load${fresh.length!==1?'s':''}${skipped>0?` (${skipped} duplicate${skipped!==1?'s':''} removed)`:''}`,'success');};
+
+  const togEq=t=>setEqF(p=>{const n=new Set(p);if(n.has(t))n.delete(t);else n.add(t);return n;});
+  const btnS={background:"transparent",color:'var(--text2)',border:'1px solid var(--dark3)',borderRadius:10,padding:"8px 16px",fontSize:12,fontFamily:"'DM Sans'"};
+  const lbl={fontSize:11,color:'#555',fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6,display:"block"};
+
+  if(!hasKey)return <KeyScreen onSave={()=>setHasKey(true)}/>;
+
+  return(<div style={{fontFamily:"'DM Sans'",background:'var(--dark)',color:'var(--text)',height:"100vh",display:"flex",flexDirection:"column",position:'relative'}}>
+    {showTutorial&&<Tutorial onClose={()=>setShowTutorial(false)} step={tutStep} setStep={setTutStep}/>}
+    {showHelp&&<HelpMenu onClose={()=>setShowHelp(false)} onFullTour={()=>{setShowHelp(false);setTutStep(0);setShowTutorial(true);}}
+      onTopic={(s)=>{setShowHelp(false);setTutStep(s);setShowTutorial(true);}}/>}
+    {showSettings&&<SettingsPanel onClose={()=>setShowSettings(false)} senderName={senderName} setSenderName={setSenderName}
+      trucks={trucks} loads={loads} matches={matches} emailsSent={emailsSent}/>}
+
+    {/* Help button */}
+    <button onClick={()=>setShowHelp(!showHelp)} style={{position:'fixed',bottom:20,left:20,zIndex:9998,width:44,height:44,borderRadius:'50%',
+      background:'linear-gradient(135deg,var(--dark2),var(--dark3))',border:'1px solid var(--dark4)',color:'#888',fontSize:20,fontWeight:800,
+      display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(0,0,0,0.4)'}}>?</button>
+
+    {/* Header */}
+    <div style={{padding:"10px 24px",borderBottom:'1px solid var(--dark3)',display:"flex",alignItems:"center",justifyContent:"space-between",background:'linear-gradient(180deg,var(--dark2),var(--dark))'}}>
+      <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <span style={{fontSize:28,filter:'drop-shadow(0 0 8px rgba(255,77,77,0.3))'}}>🔥</span>
+        <div><div style={{fontSize:17,fontWeight:800,fontFamily:'Outfit',background:'linear-gradient(135deg,#ff4d4d,#ff6b35)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>FREIGHT MATCHER</div>
+          <div style={{fontSize:10,color:'#555',letterSpacing:2,fontFamily:'Outfit'}}>DEEPSEEK POWERED</div></div></div>
+      <div style={{display:"flex",gap:20,alignItems:"center"}}>
+        {[["TRUCKS",trucks.length,"#ff8c42"],["LOADS",loads.length,"#00d4aa"],["MATCHES",totM,"#ff4d4d"]].map(([l,v,c])=>(
+          <div key={l} style={{textAlign:"center"}}><div style={{fontSize:10,color:'#555',fontWeight:600}}>{l}</div>
+            <div style={{fontSize:20,fontWeight:800,color:c,fontFamily:'Outfit'}}>{v}</div></div>))}
+        <button onClick={()=>{if(confirm("Start fresh? This clears all trucks and loads.")){setTrucks([]);setLoads([]);setSelTruck(null);showToast('Session cleared','info');}}}
+          style={{background:'var(--dark)',color:'#555',border:'1px solid var(--dark3)',borderRadius:8,padding:"6px 10px",fontSize:11}}>🗑️ New</button>
+        <button onClick={()=>setShowSettings(true)}
+          style={{background:'var(--dark)',color:'#555',border:'1px solid var(--dark3)',borderRadius:8,padding:"6px 10px",fontSize:12}}>⚙️</button>
+        <button onClick={()=>{if(confirm("Change key?")){localStorage.removeItem("fm_key");setHasKey(false);}}}
+          style={{background:'var(--dark)',color:'#555',border:'1px solid var(--dark3)',borderRadius:8,padding:"6px 10px",fontSize:12}}>🔑</button></div></div>
+
+    {/* Tabs */}
+    <div style={{display:"flex",borderBottom:'1px solid var(--dark3)',background:'var(--dark2)'}}>
+      <Tab dtab="trucks" active={tab==="trucks"} onClick={()=>setTab("trucks")} count={trucks.length}>🚛 Trucks</Tab>
+      <Tab dtab="loads" active={tab==="loads"} onClick={()=>setTab("loads")} count={loads.length}>📦 Loads</Tab>
+      <Tab dtab="map" active={tab==="map"} onClick={()=>setTab("map")}>🗺️ Map</Tab>
+      <Tab dtab="matches" active={tab==="matches"} onClick={()=>setTab("matches")} count={totM}>🔥 Matches</Tab>
+    </div>
+
+    <div style={{flex:1,display:"flex",overflow:"hidden",flexDirection:"column"}}>
+      {geocoding&&<div style={{padding:'6px 24px',background:'rgba(255,179,71,0.06)',borderBottom:'1px solid rgba(255,179,71,0.15)',display:'flex',alignItems:'center',gap:8,fontSize:12,color:'#ffb347',flexShrink:0}}>
+        <Spin/>{geoProgress||'🗺️ Geocoding cities...'}</div>}
+      <div style={{flex:1,display:"flex",overflow:"hidden"}}>
+      {tab==="trucks"&&(<div style={{flex:1,overflow:"auto",padding:24}}><div style={{maxWidth:900,margin:"0 auto"}}>
+        <div style={{marginBottom:12}}><div style={{fontSize:22,fontWeight:800,fontFamily:'Outfit'}}>Add Trucks</div>
+          <div style={{fontSize:13,color:'#888',marginTop:4}}>AI detects <strong style={{color:'#fafafa'}}>truck locations</strong> and <strong style={{color:'#00bcd4'}}>preferred lanes</strong> automatically.</div></div>
+        <AIInput icon="🚛" clearKey={tClear} placeholder={`Paste carrier info:\n\n"Felix@hegelmann.us 217-636-3678\nDallas, TX - 12:00 PM\nNiagara Falls, NY - 10:00 AM"\n\n"Dallas to Houston – Ready 1300"`}
+          btnLabel="🔥 Parse" onParse={parseTrucks} parsing={tP}/>
+        <Err msg={tE} onClose={()=>setTE("")}/>
+        {pT&&<Preview items={pT} type="truck" onAccept={acceptT} onReject={()=>setPT(null)} onRemove={i=>setPT(p=>p.filter((_,j)=>j!==i))}/>}
+        {trucks.length>0&&(<div style={{marginTop:28}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+            <div style={{fontSize:16,fontWeight:700,fontFamily:'Outfit'}}>Fleet ({trucks.length})</div>
+            <button onClick={()=>{if(confirm("Clear?"))setTrucks([]);}} style={{...btnS,padding:"5px 14px",fontSize:11,color:'#ff4d4d',borderColor:'#ff4d4d33'}}>Clear All</button></div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
+            {trucks.map(t=>(<div key={t.id} style={{padding:14,background:'var(--dark2)',borderRadius:14,border:'1px solid var(--dark3)',borderLeft:`4px solid ${EC[t.equipment]||'#4da6ff'}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div><div style={{fontWeight:700,fontSize:14,fontFamily:'Outfit'}}>🚛 {t.location}
+                {(t.preferred_destinations||[]).length>0&&<span style={{color:'#00bcd4',fontSize:12}}> → {t.preferred_destinations.join(', ')}</span>}</div>
+                <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap"}}>
+                  <Badge color={EC[t.equipment]} small>{t.equipment}</Badge>
+                  {t.available&&<Badge color="#ffb347" small>{t.available}</Badge>}
+                  {t.carrier&&<Badge color="#00bcd4" small>{t.carrier.split('@')[0]}</Badge>}</div>
+                {matches[t.id]&&<div style={{marginTop:5,fontSize:12,color:'#00d4aa',fontWeight:700}}>🔥 {matches[t.id].length} match{matches[t.id].length!==1?"es":""}</div>}
+                {!t.coords&&<div style={{marginTop:4,fontSize:11,color:'#ffb347'}}>⏳ Geocoding — will appear on map shortly</div>}</div>
+              <button onClick={()=>setTrucks(p=>p.filter(x=>x.id!==t.id))} style={{...btnS,padding:"5px 10px",fontSize:11,color:'#ff4d4d',borderColor:'#ff4d4d33'}}>✕</button>
+            </div>))}</div></div>)}
+      </div></div>)}
+
+      {tab==="loads"&&(<div style={{flex:1,overflow:"auto",padding:24}}><div style={{maxWidth:900,margin:"0 auto"}}>
+        <div style={{marginBottom:12}}><div style={{fontSize:22,fontWeight:800,fontFamily:'Outfit'}}>Add Loads</div>
+          <div style={{fontSize:13,color:'#888',marginTop:4}}>TRM, Revenova, DAT, emails — handles 100+ at once.</div></div>
+        <AIInput icon="📦" clearKey={lClear} placeholder={"Paste from TRM, Revenova, load boards, emails...\n\nTRM format is parsed INSTANTLY (no AI needed, no cost).\nOther formats go through AI automatically.\n\nPaste hundreds of loads — no limit."} btnLabel="🔥 Parse" onParse={parseLoads} parsing={lP}/>
+        <Err msg={lE} onClose={()=>setLE("")}/>
+        {lP&&lProg&&<div className="fadeUp" style={{marginTop:12,padding:"12px 18px",background:'rgba(255,77,77,0.06)',border:'1px solid rgba(255,77,77,0.2)',borderRadius:12,fontSize:13,color:'#ff6b35',display:"flex",alignItems:"center",gap:8}}><Spin/>{lProg}</div>}
+        {pL&&<Preview items={pL} type="load" onAccept={acceptL} onReject={()=>setPL(null)} onRemove={i=>setPL(p=>p.filter((_,j)=>j!==i))}/>}
+        {loads.length>0&&(<div style={{marginTop:28}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+            <div style={{fontSize:16,fontWeight:700,fontFamily:'Outfit'}}>Load Board ({loads.length})</div>
+            <button onClick={()=>{if(confirm("Clear?"))setLoads([]);}} style={{...btnS,padding:"5px 14px",fontSize:11,color:'#ff4d4d',borderColor:'#ff4d4d33'}}>Clear All</button></div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(340px,1fr))",gap:10}}>
+            {loads.map(l=>(<div key={l.id} style={{padding:14,background:'var(--dark2)',borderRadius:14,border:'1px solid var(--dark3)',borderLeft:'4px solid #00d4aa',display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div><div style={{fontWeight:700,fontSize:14,fontFamily:'Outfit'}}>{l.origin} → {l.destination}</div>
+                <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap"}}>
+                  <Badge color={EC[l.equipment]} small>{l.equipment}</Badge>{l.rate&&<Badge color="#00d4aa" small>${l.rate}</Badge>}{l.pickup_date&&<Badge color="#b388ff" small>{l.pickup_date}</Badge>}</div></div>
+              <button onClick={()=>setLoads(p=>p.filter(x=>x.id!==l.id))} style={{...btnS,padding:"5px 10px",fontSize:11,color:'#ff4d4d',borderColor:'#ff4d4d33'}}>✕</button>
+            </div>))}</div></div>)}
+      </div></div>)}
+
+      {tab==="map"&&<>
+        <div style={{flex:1,position:"relative"}}>
+          <USMap trucks={trucks} loads={loads} matches={matches} selTruck={selTruck} radius={radius}
+            onTruckClick={id=>setSelTruck(id===selTruck?null:id)} showSplash={mapSplash}/></div>
+        <div style={{width:310,borderLeft:'1px solid var(--dark3)',background:'var(--dark2)',overflow:"auto",padding:18,display:"flex",flexDirection:"column",gap:18}}>
+          {/* Radius Slider */}
+          <div><label style={lbl}>Radius: {radius} mi</label>
+            <input type="range" min={RAD_MIN} max={RAD_MAX} value={radius} onChange={e=>setRadius(parseInt(e.target.value))}
+              style={{width:'100%',marginTop:4}}/>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#555',marginTop:4}}>
+              <span>{RAD_MIN} mi</span><span>{RAD_MAX} mi</span></div></div>
+
+          {/* Equipment - Primary */}
+          <div><label style={lbl}>Equipment</label>
+            <div style={{display:"flex",flexDirection:"column",gap:5}}>
+              {EQ_PRIMARY.map(type=>(<label key={type} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"5px 10px",borderRadius:8,fontSize:13,
+                background:eqF.has(type)?EC[type]+'0d':'transparent'}}>
+                <input type="checkbox" checked={eqF.has(type)} onChange={()=>togEq(type)} style={{accentColor:EC[type]}}/>
+                <span style={{width:10,height:10,borderRadius:'50%',background:`radial-gradient(circle,${EC[type]}66,${EC[type]}22)`}}/><span style={{color:eqF.has(type)?'var(--text)':'#555'}}>{type}</span>
+              </label>))}
+              <button onClick={()=>setShowMoreEq(!showMoreEq)} style={{background:'transparent',color:'#ff6b35',border:'none',fontSize:12,fontWeight:600,padding:'6px 10px',textAlign:'left'}}>
+                {showMoreEq?'▾ Less Types':'▸ More Types'}</button>
+              {showMoreEq&&EQ_MORE.map(type=>(<label key={type} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"5px 10px",borderRadius:8,fontSize:13,
+                background:eqF.has(type)?EC[type]+'0d':'transparent'}}>
+                <input type="checkbox" checked={eqF.has(type)} onChange={()=>togEq(type)} style={{accentColor:EC[type]}}/>
+                <span style={{width:10,height:10,borderRadius:'50%',background:`radial-gradient(circle,${EC[type]}66,${EC[type]}22)`}}/><span style={{color:eqF.has(type)?'var(--text)':'#555'}}>{type}</span>
+              </label>))}
+            </div></div>
+
+          {/* Selected truck */}
+          {selTruck&&(()=>{const t=trucks.find(x=>x.id===selTruck),m=matches[selTruck]||[];
+            return t?(<div style={{padding:14,borderRadius:12,background:'var(--dark)',border:`1px solid ${EC[t.equipment]}33`}}>
+              <div style={{fontSize:12,fontWeight:700,color:'#ff6b35',marginBottom:4,fontFamily:'Outfit'}}>SELECTED</div>
+              <div style={{fontSize:15,fontWeight:700,fontFamily:'Outfit'}}>🚛 {t.location}</div>
+              {(t.preferred_destinations||[]).length>0&&<div style={{fontSize:12,color:'#00bcd4',marginTop:3}}>→ {t.preferred_destinations.join(', ')}</div>}
+              <div style={{display:"flex",gap:6,marginTop:6}}><Badge color={EC[t.equipment]} small>{t.equipment}</Badge></div>
+              <div style={{marginTop:8,fontSize:13,color:'#00d4aa',fontWeight:700}}>🔥 {m.length} match{m.length!==1?"es":""}</div>
+              {m.slice(0,5).map((x,i)=>(<div key={i} style={{marginTop:8,padding:10,borderRadius:10,background:'var(--dark2)',fontSize:12,borderLeft:'3px solid #00d4aa'}}>
+                <div style={{fontWeight:600}}>{x.load.origin} → {x.load.destination}</div>
+                <div style={{color:'#888',marginTop:2}}>{x.distance} mi{x.load.rate&&` · $${x.load.rate}`}</div></div>))}
+            </div>):null;})()}
+        </div>
+      </>}
+
+      {tab==="matches"&&(<div style={{flex:1,overflow:"auto",padding:24}}><div style={{maxWidth:900,margin:"0 auto"}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+          <div style={{fontSize:22,fontWeight:800,fontFamily:'Outfit'}}>🔥 Matches</div>
+          {totM>0&&<div style={{display:'flex',gap:8}}>
+            <button onClick={()=>exportMatchesCSV(matches,trucks,loads)}
+              style={{background:'rgba(179,136,255,0.12)',color:'#b388ff',border:'1px solid rgba(179,136,255,0.2)',borderRadius:12,padding:"10px 16px",fontSize:13,fontWeight:600,fontFamily:'Outfit'}}>
+              📊 Export CSV
+            </button>
+            <button onClick={()=>{
+            // Group all matches by carrier, send one bulk email per carrier
+            const byCarrier={};
+            Object.entries(matches).forEach(([tid,tm])=>{
+              const truck=trucks.find(t=>t.id===tid);if(!truck)return;
+              const key=truck.carrier||truck.id;
+              if(!byCarrier[key])byCarrier[key]=[];
+              byCarrier[key].push({truck,matches:tm});
+            });
+            // For now send the first carrier group (or all if no carriers)
+            const groups=Object.values(byCarrier);
+            if(groups.length===1){sendBulkEmail(groups[0]);}
+            else{
+              // Multiple carriers — send them all as one combined email
+              const allTruckMatches=groups.flat();
+              sendBulkEmail(allTruckMatches);
+            }
+          }} style={{background:'linear-gradient(135deg,#4da6ff,#3b82f6)',color:'#fff',border:"none",borderRadius:12,padding:"10px 20px",fontSize:13,fontWeight:700,fontFamily:'Outfit',
+            boxShadow:'0 2px 12px rgba(59,130,246,0.3)',display:'flex',alignItems:'center',gap:6}}>
+            📧 Send All Matches ({totM})
+          </button>
+          </div>}
+        </div>
+        <div style={{fontSize:13,color:'#888',marginBottom:24}}>{totM} match{totM!==1?"es":""} within {radius} mi</div>
+        {totM===0&&(<div style={{padding:48,textAlign:"center",color:'#555',background:'var(--dark2)',borderRadius:20,border:'1px solid var(--dark3)'}}>
+          <div style={{fontSize:48,marginBottom:12,opacity:0.4}}>🔥</div><div style={{fontSize:16,fontWeight:600,fontFamily:'Outfit'}}>No matches yet</div>
+          <div style={{fontSize:13,marginTop:6}}>{trucks.length===0?"Add trucks first":loads.length===0?"Add loads first":"Try increasing radius"}</div></div>)}
+        {Object.entries(matches).map(([tid,tm])=>{const truck=trucks.find(t=>t.id===tid);if(!truck)return null;
+          const hasLanes=(truck.preferred_destinations||[]).length>0;
+          return(<div key={tid} className="fadeUp" style={{marginBottom:20,background:'var(--dark2)',borderRadius:20,border:'1px solid var(--dark3)',overflow:"hidden"}}>
+            <div style={{padding:"16px 20px",borderBottom:'1px solid var(--dark3)',display:"flex",justifyContent:"space-between",alignItems:"center",
+              background:`linear-gradient(135deg,${EC[truck.equipment]}08,transparent)`}}>
+              <div><div style={{fontWeight:800,fontSize:16,fontFamily:'Outfit'}}>🚛 {truck.location}{truck.carrier?` · ${truck.carrier}`:""}</div>
+                <div style={{display:"flex",gap:6,marginTop:5}}>
+                  <Badge color={EC[truck.equipment]} small>{truck.equipment}</Badge>
+                  {hasLanes&&<Badge color="#00bcd4" small>→ {truck.preferred_destinations.join(', ')}</Badge>}
+                  {truck.available&&<Badge color="#ffb347" small>{truck.available}</Badge>}
+                </div></div>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <button onClick={()=>sendEmailWithImage(truck,tm)}
+                  style={{background:'linear-gradient(135deg,#4da6ff,#3b82f6)',color:'#fff',border:"none",borderRadius:10,padding:"7px 16px",fontSize:12,fontWeight:700,fontFamily:'Outfit',
+                    boxShadow:'0 2px 12px rgba(59,130,246,0.3)'}}>📧 Email{tm.length>1?` All (${tm.length})`:''}</button>
+                <div style={{background:'linear-gradient(135deg,#ff4d4d,#ff6b35)',color:'#fff',padding:"6px 14px",borderRadius:99,fontSize:13,fontWeight:800,fontFamily:'Outfit'}}>🔥 {tm.length}</div></div></div>
+            {tm.map((x,i)=>(<div key={i} style={{padding:"12px 20px",borderBottom:i<tm.length-1?'1px solid var(--dark3)':"none",display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:13}}>
+              <div style={{flex:1}}><div><span style={{fontWeight:700}}>{x.load.origin}</span><span style={{color:'#555'}}> → </span>
+                <span style={{fontWeight:700}}>{x.load.destination}</span>
+                <span style={{color:'#888',marginLeft:8}}>{x.load.weight?.toLocaleString()} lbs{x.load.rate&&` · $${x.load.rate}`}</span>
+                {x.laneMatch&&<span style={{marginLeft:6,background:'rgba(0,188,212,0.12)',color:'#00bcd4',padding:'1px 7px',borderRadius:99,fontSize:10,fontWeight:700}}>On Lane</span>}
+                </div>
+                {(x.load.pickup_date||x.load.delivery_date)&&<div style={{fontSize:11,color:'#666',marginTop:2}}>
+                  {x.load.pickup_date&&`PU: ${x.load.pickup_date}${x.load.pickup_time?' '+x.load.pickup_time:''}`}
+                  {x.load.pickup_date&&x.load.delivery_date&&' → '}
+                  {x.load.delivery_date&&`DEL: ${x.load.delivery_date}${x.load.delivery_time?' '+x.load.delivery_time:''}`}</div>}</div>
+              <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+                <button onClick={()=>sendEmailWithImage(truck,[x])}
+                  style={{background:'rgba(77,166,255,0.12)',color:'#4da6ff',border:'1px solid rgba(77,166,255,0.2)',borderRadius:8,padding:"4px 10px",fontSize:11}}>📧</button>
+                <button onClick={()=>{navigator.clipboard.writeText(`${x.load.origin} → ${x.load.destination} | ${x.load.equipment} | ${(x.load.weight||0).toLocaleString()} lbs${x.load.rate?` | $${x.load.rate}`:''}`);}}
+                  style={{background:'rgba(179,136,255,0.12)',color:'#b388ff',border:'1px solid rgba(179,136,255,0.2)',borderRadius:8,padding:"4px 10px",fontSize:11}}>📋</button>
+                <div style={{color:x.distance<50?'#00d4aa':x.distance<100?'#ff8c42':'#888',fontWeight:800,fontSize:14,whiteSpace:"nowrap",minWidth:55,textAlign:"right",fontFamily:'Outfit'}}>{x.distance} mi</div></div>
+            </div>))}</div>);})}
+      </div></div>)}
+    </div></div>
+  </div>);}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

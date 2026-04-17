@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pillar — Carrier Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f5f0e8'/%3E%3Crect x='11' y='6' width='10' height='18' rx='1.5' fill='%23b8974a'/%3E%3Crect x='8' y='4' width='16' height='3.5' rx='1' fill='%23b8974a'/%3E%3Crect x='8' y='24' width='16' height='2.5' rx='1' fill='%23b8974a'/%3E%3Crect x='8' y='26.5' width='16' height='2' rx='1' fill='%238a6e2a'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f7f2ea;
+  --surface: #f0ebe0;
+  --panel: #ede7d9;
+  --card: #fffdf8;
+  --border: #ddd5c0;
+  --border-strong: #c8bda8;
+  --gold: #b8974a;
+  --gold-dark: #8a6e2a;
+  --gold-light: #d4ac5a;
+  --gold-dim: #e8d9b8;
+  --text: #1e1a14;
+  --text-mid: #4a4030;
+  --muted: #8a7d68;
+  --accent2: #2a8a60;
+  --accent3: #2a60a0;
+  --danger: #a03030;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== SCREENS ===== */
+.screen { display: none; min-height: 100vh; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ===== HEADER ===== */
+.app-header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 36px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.logo { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+.logo-icon { width: 28px; height: 28px; flex-shrink: 0; }
+.logo-text {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: .14em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.logo-sub {
+  font-size: .6rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 400;
+  display: block;
+  margin-top: -2px;
+}
+.btn-header {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .75rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: color .2s, border-color .2s;
+}
+.btn-header:hover { color: var(--gold); border-color: var(--gold); }
+
+/* ===== LANDING ===== */
+#landing { background: var(--bg); }
+
+.landing-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle pillar watermark */
+.pillar-watermark {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: .06;
+  pointer-events: none;
+}
+
+.landing-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+}
+
+/* Hero mark */
+.hero-mark {
+  margin-bottom: 24px;
+}
+
+.hero-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 2.6rem;
+  letter-spacing: .2em;
+  color: var(--gold);
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 6px;
+  text-align: center;
+}
+.hero-sub {
+  font-size: .72rem;
+  color: var(--muted);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 400;
+  text-align: center;
+  margin-bottom: 44px;
+}
+
+/* SF card */
+.sf-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 20px rgba(0,0,0,.06);
+}
+.sf-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.sf-card-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.btn-sf-pull {
+  flex: 1;
+  background: var(--gold);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 15px;
+  cursor: pointer;
+  transition: background .2s, transform .1s, box-shadow .2s;
+  box-shadow: 0 2px 8px rgba(184,151,74,.25);
+}
+.btn-sf-pull:hover { background: var(--gold-light); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(184,151,74,.3); }
+.btn-sf-pull:active { transform: translateY(0); }
+.btn-sf-pull:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* URL config (settings panel) */
+.sf-url-panel {
+  display: none;
+  margin-top: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+.sf-url-panel.visible { display: block; }
+.sf-url-panel label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 8px;
+}
+.sf-url-row { display: flex; gap: 8px; }
+.sf-url-input {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-size: .82rem;
+  padding: 8px 11px;
+  outline: none;
+  transition: border-color .2s;
+}
+.sf-url-input:focus { border-color: var(--gold); }
+.sf-url-input::placeholder { color: var(--muted); }
+.btn-save-url {
+  background: var(--gold);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .2s;
+}
+.btn-save-url:hover { background: var(--gold-light); }
+
+/* Progress */
+.sf-progress { display: none; margin-top: 20px; }
+.sf-progress.visible { display: block; }
+.progress-steps { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.progress-step { font-family: 'Barlow Condensed', sans-serif; font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); transition: color .4s; }
+.progress-step.active { color: var(--gold); font-weight: 700; }
+.progress-step.done { color: var(--accent2); }
+.progress-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 2px; width: 0%; transition: width 1.2s ease; }
+.progress-label { margin-top: 8px; font-size: .78rem; color: var(--muted); text-align: center; font-family: 'Barlow Condensed', sans-serif; letter-spacing: .06em; }
+.elapsed { color: var(--gold); margin-left: 6px; font-size: .72rem; }
+
+/* Divider */
+
+/* Manual upload */
+.btn-manual {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .82rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 12px;
+  cursor: pointer;
+  transition: color .2s, border-color .2s;
+  position: relative;
+  text-align: center;
+}
+.btn-manual:hover { color: var(--text); border-color: var(--border-strong); }
+.btn-manual input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+
+.landing-footer {
+  margin-top: 18px;
+  font-size: .7rem;
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: .04em;
+}
+.landing-footer a { color: var(--gold); text-decoration: none; }
+.landing-footer a:hover { text-decoration: underline; }
+
+/* ===== ANALYSIS SCREEN ===== */
+#analysis { background: var(--bg); }
+.analysis-layout { display: grid; grid-template-columns: 290px 1fr; flex: 1; overflow: hidden; min-height: 0; }
+
+.sidebar {
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+.section-label { font-family: 'Barlow Condensed', sans-serif; font-size: .62rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.sidebar-divider { height: 1px; background: var(--border); }
+
+.file-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: .78rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); flex-shrink: 0; }
+
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-family: 'Barlow Condensed', sans-serif; font-size: .65rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); }
+.field select, .field input {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-size: .85rem;
+  padding: 8px 11px;
+  outline: none;
+  transition: border-color .2s;
+  appearance: none;
+  width: 100%;
+}
+.field select:focus, .field input:focus { border-color: var(--gold); }
+.field select option { background: #fffdf8; }
+
+.btn-run {
+  width: 100%;
+  background: var(--gold);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: .9rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 12px;
+  cursor: pointer;
+  transition: background .2s, transform .1s;
+  box-shadow: 0 2px 8px rgba(184,151,74,.2);
+}
+.btn-run:hover { background: var(--gold-light); transform: translateY(-1px); }
+.btn-run:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+
+/* Main */
+.main-content { padding: 26px 30px; overflow-y: auto; }
+.empty-results { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 55vh; gap: 10px; color: var(--muted); text-align: center; }
+.empty-icon { font-size: 2.8rem; opacity: .25; }
+.empty-text { font-size: .88rem; letter-spacing: .04em; font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+
+#results { display: none; }
+
+.results-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+.results-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 1.25rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text); }
+.results-meta { font-size: .75rem; color: var(--muted); margin-top: 3px; font-family: 'Barlow', sans-serif; }
+.btn-export { background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; transition: all .2s; white-space: nowrap; }
+.btn-export:hover { border-color: var(--gold); color: var(--gold); }
+
+.stats-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; min-width: 110px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+.stat-num { font-family: 'Barlow Condensed', sans-serif; font-size: 1.9rem; font-weight: 800; color: var(--gold); line-height: 1; }
+.stat-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin-top: 3px; font-family: 'Barlow Condensed', sans-serif; }
+
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.search-input { background: var(--card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: .84rem; padding: 7px 11px; outline: none; width: 210px; transition: border-color .2s; }
+.search-input:focus { border-color: var(--gold); }
+.filter-tag { background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: .7rem; letter-spacing: .06em; padding: 4px 13px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.filter-tag.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-dark); font-weight: 700; }
+
+/* Rep groups */
+.rep-section { margin-bottom: 22px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,.05); }
+.rep-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 16px;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-bottom: 2px solid var(--gold);
+}
+.rep-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: .06em; color: var(--text); text-transform: uppercase; }
+.rep-badge { background: var(--gold-dim); border: 1px solid var(--border-strong); color: var(--gold-dark); font-size: .65rem; padding: 2px 9px; border-radius: 20px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: .06em; }
+.rep-total-badge { background: #d8eee6; border: 1px solid #b0d8c8; color: var(--accent2); font-size: .65rem; padding: 2px 9px; border-radius: 20px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: .06em; }
+
+.rep-table-wrap { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; background: var(--card); }
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--surface); }
+th { font-family: 'Barlow Condensed', sans-serif; font-size: .65rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); padding: 9px 16px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface); }
+td { padding: 10px 16px; font-size: .86rem; color: var(--text); vertical-align: middle; }
+td.carrier-cell { font-weight: 600; }
+td.count-cell { text-align: center; }
+.count-pill { display: inline-block; padding: 2px 12px; border-radius: 20px; font-family: 'Barlow Condensed', sans-serif; font-size: .9rem; font-weight: 700; }
+.count-high { background: #fde8e8; color: #8a2020; border: 1px solid #f0c0c0; }
+.count-mid  { background: var(--gold-dim); color: var(--gold-dark); border: 1px solid #d4b870; }
+.count-low  { background: #ddeeff; color: #1a4878; border: 1px solid #b0cce8; }
+.count-base { background: #d8eee6; color: #1a5c40; border: 1px solid #a8d4c0; }
+.no-results { text-align: center; padding: 36px; color: var(--muted); font-size: .88rem; }
+
+.spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media(max-width:768px){
+  .analysis-layout{grid-template-columns:1fr;}
+  .sidebar{border-right:none;border-bottom:1px solid var(--border);max-height:45vh;}
+  .main-content{padding:16px;}
+  .app-header{padding:0 16px;}
+  .landing-body{padding:32px 16px 48px;}
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- ===== LANDING ===== -->
+<div class="screen active" id="landing">
+  <header class="app-header">
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="7" width="12" height="15" rx="1.5" fill="#b8974a"/>
+        <rect x="5" y="4.5" width="18" height="3.5" rx="1" fill="#b8974a"/>
+        <rect x="5" y="22" width="18" height="2.5" rx="1" fill="#b8974a"/>
+        <rect x="5" y="24.5" width="18" height="2" rx="1" fill="#8a6e2a"/>
+      </svg>
+      <div>
+        <div class="logo-text">Pillar</div>
+        <div class="logo-sub">Carrier Intelligence</div>
+      </div>
+    </div>
+    <button class="btn-header" onclick="toggleUrlPanel()">Configure URL</button>
+  </header>
+
+  <div class="landing-body">
+    <!-- Watermark -->
+    <svg class="pillar-watermark" width="260" height="340" viewBox="0 0 260 340" xmlns="http://www.w3.org/2000/svg">
+      <rect x="80" y="40" width="100" height="240" rx="6" fill="#b8974a"/>
+      <rect x="40" y="20" width="180" height="34" rx="5" fill="#b8974a"/>
+      <rect x="40" y="280" width="180" height="24" rx="4" fill="#b8974a"/>
+      <rect x="40" y="304" width="180" height="18" rx="3" fill="#8a6e2a"/>
+    </svg>
+
+    <div class="landing-content">
+      <!-- Hero logo -->
+      <svg class="hero-mark" width="64" height="72" viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg">
+        <rect x="18" y="16" width="28" height="42" rx="3" fill="#b8974a"/>
+        <rect x="8" y="8" width="48" height="10" rx="2.5" fill="#b8974a"/>
+        <rect x="8" y="58" width="48" height="7" rx="2" fill="#b8974a"/>
+        <rect x="8" y="65" width="48" height="5" rx="1.5" fill="#8a6e2a"/>
+      </svg>
+
+      <h1 class="hero-title">Pillar</h1>
+      <p class="hero-sub">Core Carrier Intelligence</p>
+
+      <div class="sf-card">
+        <div class="sf-card-label">Live Data from Salesforce</div>
+
+        <div class="btn-row">
+          <button class="btn-sf-pull" id="sfPullBtn" onclick="startSFPull()">Pull from Salesforce</button>
+          <label class="btn-manual">
+            Upload CSV
+            <input type="file" id="manualFileInput" accept=".csv,.json,.xlsx,.xls" onchange="handleManualFile(this)">
+          </label>
+        </div>
+
+        <!-- URL config panel -->
+        <div class="sf-url-panel" id="sfUrlPanel">
+          <label>Salesforce Report URL</label>
+          <div class="sf-url-row">
+            <input class="sf-url-input" id="sfUrlInput" placeholder="Paste Lightning or Classic report URL...">
+            <button class="btn-save-url" onclick="saveUrl()">Save</button>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="sf-progress" id="sfProgress">
+          <div class="progress-steps">
+            <span class="progress-step" id="step1">Connecting</span>
+            <span class="progress-step" id="step2">Generating</span>
+            <span class="progress-step" id="step3">Downloading</span>
+            <span class="progress-step" id="step4">Ready</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-label" id="progressLabel">Initializing... <span class="elapsed" id="elapsedEl"></span></div>
+        </div>
+
+      </div>
+
+      <p class="landing-footer">
+        Must be logged into Salesforce in this browser &nbsp;&middot;&nbsp;
+        <a href="#" onclick="toggleUrlPanel();return false;">Configure URL</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ANALYSIS SCREEN ===== -->
+<div class="screen" id="analysis">
+  <header class="app-header">
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="7" width="12" height="15" rx="1.5" fill="#b8974a"/>
+        <rect x="5" y="4.5" width="18" height="3.5" rx="1" fill="#b8974a"/>
+        <rect x="5" y="22" width="18" height="2.5" rx="1" fill="#b8974a"/>
+        <rect x="5" y="24.5" width="18" height="2" rx="1" fill="#8a6e2a"/>
+      </svg>
+      <div>
+        <div class="logo-text">Pillar</div>
+        <div class="logo-sub">Carrier Intelligence</div>
+      </div>
+    </div>
+    <button class="btn-header" onclick="goToLanding()">New Pull</button>
+  </header>
+
+  <div class="analysis-layout">
+    <aside class="sidebar">
+      <div>
+        <div class="section-label">Data Source</div>
+        <div class="file-chip"><span class="chip-dot"></span><span id="fileStatusText">File loaded</span></div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div>
+        <div class="section-label">Filters</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="field"><label>Team</label><select id="teamFilter"></select></div>
+          <div class="field">
+            <label>Month</label>
+            <select id="monthSelect">
+              <option value="">All months</option>
+              <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+              <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+              <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+              <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+            </select>
+          </div>
+          <div class="field"><label>Year</label><input type="number" id="yearInput" placeholder="e.g. 2026" min="2020" max="2030"></div>
+          <div class="field"><label>Min Load Count</label><input type="number" id="minLoads" value="4" min="1"></div>
+          <div class="field"><label>Broker (optional)</label><select id="repFilter"><option value="">All brokers</option></select></div>
+        </div>
+      </div>
+
+      <button class="btn-run" id="runBtn" onclick="runAnalysis()">Run Analysis</button>
+    </aside>
+
+    <main class="main-content">
+      <div class="empty-results" id="emptyResults">
+        <div class="empty-icon">🏛</div>
+        <div class="empty-text">Configure filters and run the analysis</div>
+      </div>
+
+      <div id="results">
+        <div class="results-header">
+          <div>
+            <div class="results-title" id="resultsTitle">Results</div>
+            <div class="results-meta" id="resultsMeta"></div>
+          </div>
+          <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+        </div>
+        <div class="stats-row" id="statsRow"></div>
+        <div class="filter-bar">
+          <input class="search-input" type="text" id="searchInput" placeholder="Search carrier or broker..." oninput="renderGroups()">
+          <span class="filter-tag active" onclick="setCountFilter(this,0)">All</span>
+          <span class="filter-tag" onclick="setCountFilter(this,10)">10+ loads</span>
+          <span class="filter-tag" onclick="setCountFilter(this,20)">20+ loads</span>
+        </div>
+        <div id="groupsContainer"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<iframe id="sf-dl-frame" style="display:none"></iframe>
+
+<script>
+var allData=[], tableData=[], countFilterMin=0, csvFormat=null;
+var MONTHS=['','January','February','March','April','May','June','July','August','September','October','November','December'];
+var REQUIRED_CORE=['Booking Carrier Rep','Carrier','Load: Load Number'];
+var DATE_FIELDS=['Actual Delivery Date','Actual Ship Date']; // accept either
+var FORMAT_A=['Origin','Destination'], FORMAT_B=['City Lane'];
+
+function goToLanding(){ document.getElementById('landing').className='screen active'; document.getElementById('analysis').className='screen'; }
+function goToAnalysis(){ document.getElementById('landing').className='screen'; document.getElementById('analysis').className='screen active'; }
+
+function toggleUrlPanel(){
+  var p=document.getElementById('sfUrlPanel');
+  p.className=p.className.indexOf('visible')!==-1?'sf-url-panel':'sf-url-panel visible';
+  if(p.className.indexOf('visible')!==-1){ document.getElementById('sfUrlInput').value=localStorage.getItem('pillar_sf_url')||'https://bayandbaytms.lightning.force.com/lightning/r/Report/00OPe00000hg2RGMAY/view?queryScope=userFolders'; }
+}
+function saveUrl(){
+  var u=document.getElementById('sfUrlInput').value.trim();
+  if(u){ localStorage.setItem('pillar_sf_url',u); alert('URL saved.'); }
+}
+
+function buildSFExportUrl(input){
+  var url=input.trim();
+  if(url.indexOf('PrintableViewDownloadServlet')!==-1){ if(url.indexOf('xf=csv')===-1) url+=(url.indexOf('?')===-1?'?':'&')+'xf=csv'; if(url.indexOf('enc=')===-1) url+='&enc=UTF-8'; return url; }
+  var match=url.match(/(00O[a-zA-Z0-9]{12,18})/);
+  if(match){ var base=url.match(/(https?:\/\/[^\/]+)/); if(base){ var inst=base[1].replace('lightning.force.com','my.salesforce.com'); return inst+'/servlet/PrintableViewDownloadServlet?reportId='+match[1]+'&xf=csv&enc=UTF-8&csvDelimiter=comma'; } }
+  return url+(url.indexOf('?')===-1?'?':'&')+'xf=csv&enc=UTF-8&csvDelimiter=comma';
+}
+
+var elapsedInterval=null;
+function startSFPull(){
+  var sfUrl=localStorage.getItem('pillar_sf_url')||'https://bayandbaytms.lightning.force.com/lightning/r/Report/00OPe00000hg2RGMAY/view?queryScope=userFolders';
+  document.getElementById('sf-dl-frame').src=buildSFExportUrl(sfUrl);
+  document.getElementById('sfPullBtn').disabled=true;
+  var prog=document.getElementById('sfProgress'); prog.className='sf-progress visible';
+  var fill=document.getElementById('progressFill');
+  var label=document.getElementById('progressLabel');
+  var sEls={s1:document.getElementById('step1'),s2:document.getElementById('step2'),s3:document.getElementById('step3'),s4:document.getElementById('step4')};
+  var start=Date.now();
+  if(elapsedInterval) clearInterval(elapsedInterval);
+  elapsedInterval=setInterval(function(){ var el=document.getElementById('elapsedEl'); if(el) el.textContent=Math.floor((Date.now()-start)/1000)+'s'; },1000);
+  var timeline=[
+    {t:0,    pct:12, txt:'Connecting to Salesforce...'},
+    {t:2000, pct:20, txt:'Report requested...'},
+    {t:5000, pct:35, txt:'Generating export file...'},
+    {t:8000, pct:48, txt:'Compiling load data...'},
+    {t:11000,pct:60, txt:'Processing carrier records...'},
+    {t:14000,pct:72, txt:'Building export file...'},
+    {t:17000,pct:82, txt:'Downloading...'},
+    {t:21000,pct:90, txt:'Almost there...'},
+    {t:24000,pct:96, txt:'Download complete — opening file picker...'},
+  ];
+  timeline.forEach(function(s){ setTimeout(function(){ fill.style.width=s.pct+'%'; label.innerHTML=s.txt+' <span class="elapsed" id="elapsedEl"></span>'; },s.t); });
+  setTimeout(function(){ sEls.s1.className='progress-step done'; sEls.s2.className='progress-step active'; },2000);
+  setTimeout(function(){ sEls.s2.className='progress-step done'; sEls.s3.className='progress-step active'; },8000);
+  setTimeout(function(){ sEls.s3.className='progress-step done'; sEls.s4.className='progress-step active'; },21000);
+  setTimeout(function(){
+    clearInterval(elapsedInterval);
+    sEls.s4.className='progress-step done'; fill.style.width='100%';
+    label.textContent='Select the downloaded file from your Downloads folder';
+    document.getElementById('manualFileInput').click();
+    document.getElementById('sfPullBtn').disabled=false;
+    prog.className='sf-progress';
+    Object.values(sEls).forEach(function(el){ el.className='progress-step'; });
+  },26000);
+}
+
+function handleManualFile(input){
+  if(!input.files[0]) return;
+  var file=input.files[0];
+  var ext=file.name.split('.').pop().toLowerCase();
+
+  if(ext==='xlsx'||ext==='xls'){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var p=parseXLSX(e.target.result);
+      if(!p){ alert('Could not read file. Please check the format.'); return; }
+      allData=p.rows; setupAfterLoad(p.headers,file.name,p.rows.length);
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var text=e.target.result;
+      var p=ext==='json'?parseJSONFile(text):parseCSV(text);
+      if(!p){ alert('Could not read file. Please check the format.'); return; }
+      allData=p.rows; setupAfterLoad(p.headers,file.name,p.rows.length);
+    };
+    reader.readAsText(file,'latin1');
+  }
+}
+
+function parseXLSX(arrayBuffer){
+  try {
+    var wb=XLSX.read(arrayBuffer,{type:'array'});
+    // Pick sheet with most rows
+    var sheetName=wb.SheetNames[0];
+    if(wb.SheetNames.length>1){
+      var max=0;
+      wb.SheetNames.forEach(function(sn){
+        var rc=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1}).length;
+        if(rc>max){max=rc;sheetName=sn;}
+      });
+    }
+    var raw=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:''});
+    // Find header row by scanning for known column names
+    var headerIdx=-1;
+    var knownCols=['Booking Carrier Rep','Carrier','Load: Load Number'];
+    for(var i=0;i<Math.min(20,raw.length);i++){
+      var rowStr=raw[i].join('|');
+      if(knownCols.every(function(col){return rowStr.indexOf(col)!==-1;})){
+        headerIdx=i; break;
+      }
+    }
+    if(headerIdx===-1) return null;
+    // Find the actual start column (first non-empty cell in header row)
+    var rawHeaders=raw[headerIdx];
+    var colStart=0;
+    for(var ci=0;ci<rawHeaders.length;ci++){ if(rawHeaders[ci]!==null&&rawHeaders[ci]!==undefined&&String(rawHeaders[ci]).trim()!==''){colStart=ci;break;} }
+    // Build headers array, keeping track of original positions, skip blanks
+    var headerMap=[]; // [{name, colIdx}]
+    rawHeaders.forEach(function(h,ci){
+      if(ci<colStart) return;
+      var name=h===null||h===undefined?'':String(h).trim();
+      if(name) headerMap.push({name:name,ci:ci});
+    });
+    var headers=headerMap.map(function(x){return x.name;});
+    var rows=[];
+    var junkWords=['confidential','copyright','grand total','salesforce'];
+    for(var i=headerIdx+1;i<raw.length;i++){
+      var rowArr=raw[i];
+      var firstVal=String(rowArr[colStart]||'').toLowerCase();
+      if(junkWords.some(function(w){return firstVal.indexOf(w)!==-1;})) continue;
+      if(rowArr.slice(colStart).every(function(v){return v===''||v===null||v===undefined;})) continue;
+      var obj={};
+      headerMap.forEach(function(hm){
+        var val=rowArr[hm.ci];
+        if(typeof val==='number'&&val>40000&&val<60000){
+          var d=XLSX.SSF.parse_date_code(val);
+          val=(d.m)+'/'+d.d+'/'+d.y;
+        }
+        obj[hm.name]=val===null||val===undefined?'':String(val).trim();
+      });
+      rows.push(obj);
+    }
+    return{headers:headers,rows:rows};
+  } catch(e){ console.error('XLSX parse error:',e); return null; }
+}
+
+function parseJSONFile(text){
+  try {
+    var d=JSON.parse(text);
+    // Handle synthetic data wrapper
+    var records=Array.isArray(d)?d:(d.records||null);
+    if(!records||!records.length){ return null; }
+    // Strip _synthetic_record key, get real headers
+    var headers=Object.keys(records[0]).filter(function(k){ return k!=='_synthetic_record'; });
+    var rows=records.map(function(r){
+      var obj={};
+      headers.forEach(function(h){ obj[h]=(r[h]===undefined||r[h]===null)?'':String(r[h]); });
+      return obj;
+    });
+    return{headers:headers,rows:rows};
+  } catch(e){ return null; }
+}
+
+function setupAfterLoad(headers,filename,rowCount){
+  var hasA=FORMAT_A.every(function(h){return headers.indexOf(h)!==-1;});
+  var hasB=FORMAT_B.every(function(h){return headers.indexOf(h)!==-1;});
+  // Format C: JSON with Origin+Destination already as separate cols (same as A)
+  csvFormat=hasA?'A':hasB?'B':null;
+  // If no lane format found but has Origin+Destination, treat as A
+  if(!csvFormat && headers.indexOf('Origin')!==-1 && headers.indexOf('Destination')!==-1) csvFormat='A';
+  var coreOk=REQUIRED_CORE.every(function(h){return headers.indexOf(h)!==-1;});
+  // Check at least one date field exists
+  var hasDate=DATE_FIELDS.some(function(h){return headers.indexOf(h)!==-1;});
+  if(!coreOk||!hasDate||!csvFormat){ alert('Missing required columns. Please check your file.'); return; }
+  // Set active date field
+  window.activeDateField=DATE_FIELDS.find(function(h){return headers.indexOf(h)!==-1;});
+  document.getElementById('fileStatusText').textContent=filename+' — '+rowCount.toLocaleString()+' rows';
+  autoDetectYear(); populateTeamFilter(); populateRepFilter('');
+  goToAnalysis();
+}
+
+function parseCSV(text){
+  var lines=text.split(/\r?\n/), headerIdx=0;
+  for(var i=0;i<Math.min(15,lines.length);i++){ if(lines[i].indexOf('Booking Carrier Rep')!==-1||lines[i].indexOf('Carrier')!==-1){headerIdx=i;break;} }
+  var headers=parseCSVLine(lines[headerIdx]), rows=[];
+  for(var i=headerIdx+1;i<lines.length;i++){
+    if(!lines[i].trim()) continue;
+    var low=lines[i].toLowerCase();
+    if(low.indexOf('confidential')!==-1||low.indexOf('copyright')!==-1||low.indexOf('grand total')!==-1) continue;
+    var vals=parseCSVLine(lines[i]), obj={};
+    for(var j=0;j<headers.length;j++) obj[headers[j]]=(vals[j]||'').trim();
+    rows.push(obj);
+  }
+  return{headers:headers,rows:rows};
+}
+
+function parseCSVLine(line){
+  var result=[],cur='',inQuote=false;
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(c==='"'){if(inQuote&&line[i+1]==='"'){cur+='"';i++;}else inQuote=!inQuote;}
+    else if(c===','&&!inQuote){result.push(cur);cur='';}
+    else cur+=c;
+  }
+  result.push(cur); return result;
+}
+
+function autoDetectYear(){
+  var years={};
+  var df=window.activeDateField||'Actual Delivery Date';
+  allData.forEach(function(r){ var v=(r[df]||'').trim(); if(v){
+    var y=null;
+    if(v.indexOf('-')!==-1){y=parseInt(v.split('-')[0]);}
+    else{var p=v.split('/');if(p.length>=3)y=parseInt(p[2]);}
+    if(y) years[y]=(years[y]||0)+1;
+  }});
+  var best=null,bc=0; Object.keys(years).forEach(function(y){if(years[y]>bc){bc=years[y];best=y;}});
+  var inp=document.getElementById('yearInput');
+  // Only pre-fill if data has recent years (2010+), otherwise clear so no year filter is applied
+  if(best&&parseInt(best)>=2010){ inp.value=best; }
+  else { inp.value=''; inp.placeholder='All years'; }
+}
+
+function populateTeamFilter(){
+  var counts={};
+  allData.forEach(function(r){var t=(r['Booking Carrier Rep Team']||'').trim();if(t)counts[t]=(counts[t]||0)+1;});
+  var teams=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];});
+  var sel=document.getElementById('teamFilter');
+  var teamField=sel.closest('.field');
+
+  if(!teams.length){
+    // No team data in this file — hide the filter and default to all
+    if(teamField) teamField.style.display='none';
+    sel.innerHTML='<option value="">All teams</option>';
+    return;
+  }
+
+  // Team data exists — show the filter
+  if(teamField) teamField.style.display='';
+  sel.innerHTML='<option value="">All teams</option>';
+  teams.forEach(function(t){var o=document.createElement('option');o.value=t;o.textContent=t;if(t==='MML Ops Truckload')o.selected=true;sel.appendChild(o);});
+  sel.removeEventListener('change',sel._repHandler);
+  sel._repHandler=function(){populateRepFilter(this.value);};
+  sel.addEventListener('change',sel._repHandler);
+}
+
+function populateRepFilter(team){
+  var seen={},reps=[];
+  allData.forEach(function(r){var rep=(r['Booking Carrier Rep']||'').trim(),t=(r['Booking Carrier Rep Team']||'').trim();if(rep&&!seen[rep]&&(!team||t===team)){seen[rep]=true;reps.push(rep);}});
+  reps.sort();
+  var sel=document.getElementById('repFilter'); sel.innerHTML='<option value="">All brokers</option>';
+  reps.forEach(function(rep){var o=document.createElement('option');o.value=rep;o.textContent=rep;sel.appendChild(o);});
+}
+
+function runAnalysis(){
+  var month=parseInt(document.getElementById('monthSelect').value)||null;
+  var year=parseInt(document.getElementById('yearInput').value)||null;
+  var minLoads=parseInt(document.getElementById('minLoads').value)||4;
+  var repFilter=document.getElementById('repFilter').value.trim();
+  var teamField=document.getElementById('teamFilter').closest('.field');  var teamFilter=(teamField&&teamField.style.display==='none')?'':(document.getElementById('teamFilter').value.trim());
+  var btn=document.getElementById('runBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Analyzing...';
+  setTimeout(function(){
+    var filtered=allData.filter(function(r){
+      var dateField=window.activeDateField||'Actual Delivery Date';
+      var d=(r[dateField]||'').trim(); if(!d) return false;
+      var m,y;
+      if(d.indexOf('-')!==-1){var p=d.split('-');y=parseInt(p[0]);m=parseInt(p[1]);}
+      else{var p=d.split('/');if(p.length<3)return false;m=parseInt(p[0]);y=parseInt(p[2]);}
+      if(month&&m!==month) return false;
+      if(year&&y!==year) return false;
+      if(teamFilter&&(r['Booking Carrier Rep Team']||'').trim()!==teamFilter) return false;
+      if(repFilter&&(r['Booking Carrier Rep']||'').trim()!==repFilter) return false;
+      return true;
+    });
+    var groups={};
+    filtered.forEach(function(r){
+      var carrier=(r['Carrier']||'').trim(), rep=(r['Booking Carrier Rep']||'').trim();
+      if(!carrier||!rep) return;
+      var key=carrier+'|||'+rep;
+      if(!groups[key]) groups[key]={carrier:carrier,rep:rep,loads:[]};
+      groups[key].loads.push((r['Load: Load Number']||'').trim());
+    });
+    tableData=Object.values(groups).filter(function(g){return g.loads.length>=minLoads;}).sort(function(a,b){return b.loads.length-a.loads.length;});
+    renderResults(filtered.length,month,year,minLoads,repFilter,teamFilter);
+    btn.disabled=false; btn.textContent='Run Analysis';
+  },50);
+}
+
+function renderResults(total,month,year,minLoads,repFilter,teamFilter){
+  document.getElementById('emptyResults').style.display='none';
+  document.getElementById('results').style.display='block';
+  var period=month?(MONTHS[month]+' '+year):(year?String(year):'All Time');
+  var teamLabel=teamFilter||'All Teams';
+  document.getElementById('resultsTitle').textContent=repFilter?(repFilter+' — '+period):(teamLabel+' — '+period);
+  document.getElementById('resultsMeta').textContent=total.toLocaleString()+' loads in period · showing '+minLoads+'+ load relationships';
+  var uC={},uR={},tL=0;
+  tableData.forEach(function(r){uC[r.carrier]=true;uR[r.rep]=true;tL+=r.loads.length;});
+  document.getElementById('statsRow').innerHTML=
+    sb(tableData.length,'Relationships')+sb(Object.keys(uC).length,'Carriers')+sb(Object.keys(uR).length,'Brokers')+sb(tL,'Total Loads');
+  renderGroups();
+}
+
+function sb(n,l){ return '<div class="stat-box"><div class="stat-num">'+n+'</div><div class="stat-label">'+l+'</div></div>'; }
+
+function renderGroups(){
+  var search=(document.getElementById('searchInput').value||'').toLowerCase();
+  var rows=tableData.filter(function(r){
+    if(countFilterMin>0&&r.loads.length<countFilterMin) return false;
+    if(search&&r.carrier.toLowerCase().indexOf(search)===-1&&r.rep.toLowerCase().indexOf(search)===-1) return false;
+    return true;
+  });
+  var repMap={};
+  rows.forEach(function(r){if(!repMap[r.rep])repMap[r.rep]=[];repMap[r.rep].push(r);});
+  Object.keys(repMap).forEach(function(rep){repMap[rep].sort(function(a,b){return b.loads.length-a.loads.length;});});
+  var repList=Object.keys(repMap).sort(function(a,b){return repMap[b][0].loads.length-repMap[a][0].loads.length;});
+  var container=document.getElementById('groupsContainer');
+  if(!repList.length){container.innerHTML='<div class="no-results">No results match your filters</div>';return;}
+  container.innerHTML=repList.map(function(rep){
+    var carriers=repMap[rep], totalLoads=carriers.reduce(function(s,c){return s+c.loads.length;},0);
+    var trs=carriers.map(function(r,i){
+      var n=r.loads.length, pc=n>=20?'count-high':n>=10?'count-mid':n>=7?'count-low':'count-base';
+      var bg=i%2===0?'':'background:var(--surface)';
+      return '<tr style="'+bg+'"><td class="carrier-cell">'+esc(r.carrier)+'</td><td class="count-cell"><span class="count-pill '+pc+'">'+n+'</span></td></tr>';
+    }).join('');
+    return '<div class="rep-section"><div class="rep-header"><span class="rep-name">'+esc(rep)+'</span><span class="rep-badge">'+carriers.length+' carrier'+(carriers.length!==1?'s':'')+'</span><span class="rep-total-badge">'+totalLoads+' loads</span></div><div class="rep-table-wrap"><table><thead><tr><th>Carrier</th><th style="text-align:center">Loads</th></tr></thead><tbody>'+trs+'</tbody></table></div></div>';
+  }).join('');
+}
+
+function setCountFilter(el,min){
+  countFilterMin=min;
+  document.querySelectorAll('.filter-tag').forEach(function(t){t.classList.remove('active');});
+  el.classList.add('active'); renderGroups();
+}
+
+function exportCSV(){
+  var search=(document.getElementById('searchInput').value||'').toLowerCase();
+  var rows=tableData.filter(function(r){
+    if(countFilterMin>0&&r.loads.length<countFilterMin) return false;
+    if(search&&r.carrier.toLowerCase().indexOf(search)===-1&&r.rep.toLowerCase().indexOf(search)===-1) return false;
+    return true;
+  });
+  var repMap={};
+  rows.forEach(function(r){if(!repMap[r.rep])repMap[r.rep]=[];repMap[r.rep].push(r);});
+  Object.keys(repMap).forEach(function(rep){repMap[rep].sort(function(a,b){return b.loads.length-a.loads.length;});});
+  var repList=Object.keys(repMap).sort(function(a,b){return repMap[b][0].loads.length-repMap[a][0].loads.length;});
+  var lines=['"Booking Broker","Carrier","Load Count"'];
+  repList.forEach(function(rep){ repMap[rep].forEach(function(r){ lines.push('"'+rep.replace(/"/g,'""')+'","'+r.carrier.replace(/"/g,'""')+'",'+r.loads.length); }); });
+  var blob=new Blob([lines.join('\r\n')],{type:'text/csv'});
+  var url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download='pillar_'+document.getElementById('resultsTitle').textContent.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
