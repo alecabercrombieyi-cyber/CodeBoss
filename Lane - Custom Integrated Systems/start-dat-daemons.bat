@@ -46,20 +46,23 @@ ping -n 2 127.0.0.1 >nul
 
 echo.
 echo ============================================================
-echo   dat-pp-cli daemons running.
+echo   dat-pp-cli daemons are RUNNING.
 echo.
 echo     Rate daemon:    http://127.0.0.1:53683
 echo     Auth listener:  http://127.0.0.1:53682
 echo.
-echo   In Mass Post, click "Get DAT Rates" -- it will fetch
-echo   directly via the CLI (no clipboard, no tab juggling).
+echo   *** LEAVE THIS WINDOW OPEN ***
+echo   This window IS the daemons. Minimize it; don't close it.
 echo.
-echo   Click "Grab DAT Token" in your DAT One tab whenever the
-echo   token expires (~every 30 min) or when Mass Post prompts.
+echo   In Mass Post:
+echo     1. Open one.dat.com (logged in) - click "Grab DAT Token"
+echo     2. Switch to Mass Post - click "Get DAT Rates"
 echo.
-echo   Close this window to stop both daemons.
+echo   To STOP everything: press any key here, or close this
+echo   window. (Pressing a key = shutdown. Not "continue".)
 echo ============================================================
 echo.
+echo Press any key to STOP the daemons . . .
 pause >nul
 
 REM Cleanup on close: stop both daemons + the auth-loop cmd window
