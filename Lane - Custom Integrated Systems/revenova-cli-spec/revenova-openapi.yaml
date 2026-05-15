@@ -1,0 +1,237 @@
+openapi: 3.0.3
+info:
+  title: Revenova TMS (Salesforce REST) API
+  version: "1.0.0"
+  description: |
+    Minimal hand-written spec covering the Salesforce REST endpoints that
+    Bay & Bay's Load Manager needs to read and write Revenova data directly:
+    Analytics Reports (the Tracking report in Alec's folder), SOQL query,
+    and sObject GET/PATCH (Posted Amount, Benchmark Rate, Status).
+
+    Auth: OAuth 2.0 username-password or web flow → Bearer token + instance URL.
+    Replace `bayandbaytms.my.salesforce.com` with your org's instance URL.
+  contact:
+    name: Alec
+    email: alec@bayandbay.example
+
+servers:
+  - url: https://bayandbaytms.my.salesforce.com
+    description: Bay & Bay production org
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: reports
+    description: Run Salesforce reports (Analytics REST). Primary read path for Load Manager.
+  - name: query
+    description: SOQL queries against Revenova custom objects.
+  - name: loads
+    description: Read and update Revenova Load records (rate, status).
+
+paths:
+  /services/data/v62.0/analytics/reports/{reportId}:
+    get:
+      tags: [reports]
+      operationId: describeReport
+      summary: Describe a report's metadata (columns, filters, type)
+      parameters:
+        - $ref: '#/components/parameters/reportId'
+      responses:
+        '200':
+          description: Report metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportDescribe'
+    post:
+      tags: [reports]
+      operationId: runReport
+      summary: Run a report synchronously and return results
+      description: |
+        Hero call for Load Manager. POST with `includeDetails=true` to get
+        detail rows. Use this against the Tracking report
+        `00OPe00000kBFfZMAW` to feed Load Manager's table.
+      parameters:
+        - $ref: '#/components/parameters/reportId'
+        - in: query
+          name: includeDetails
+          schema:
+            type: boolean
+            default: true
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRunRequest'
+      responses:
+        '200':
+          description: Report results with rows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResults'
+
+  /services/data/v62.0/query:
+    get:
+      tags: [query]
+      operationId: soqlQuery
+      summary: Run a SOQL query
+      description: |
+        Used by Load Manager for ad-hoc lookups, e.g.:
+        `SELECT Id, Name, rXTMS__Posted_Amount__c FROM rXTMS__Load__c
+         WHERE rXTMS__Status__c = 'Booked' LIMIT 200`
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+          description: SOQL query string
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+
+  /services/data/v62.0/sobjects/{objectName}/{recordId}:
+    get:
+      tags: [loads]
+      operationId: getSObject
+      summary: Get a single record by Id
+      parameters:
+        - $ref: '#/components/parameters/objectName'
+        - $ref: '#/components/parameters/recordId'
+        - in: query
+          name: fields
+          schema:
+            type: string
+          description: Comma-separated field list (optional)
+      responses:
+        '200':
+          description: Record JSON
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+    patch:
+      tags: [loads]
+      operationId: updateSObject
+      summary: Update fields on a record (e.g. Posted Amount, Benchmark Rate, Status)
+      description: |
+        Replaces the Mass Post bookmarklet write-back path. PATCH a Load__c
+        with `{"rXTMS__Posted_Amount__c": 1200, "rXTMS__Benchmark_Rate__c": 1350}`.
+      parameters:
+        - $ref: '#/components/parameters/objectName'
+        - $ref: '#/components/parameters/recordId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              example:
+                rXTMS__Posted_Amount__c: 1200
+                rXTMS__Benchmark_Rate__c: 1350
+      responses:
+        '204':
+          description: Updated (no content)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Salesforce-OAuth2-AccessToken
+
+  parameters:
+    reportId:
+      in: path
+      name: reportId
+      required: true
+      schema:
+        type: string
+      description: 15- or 18-character Salesforce report Id (e.g. 00OPe00000kBFfZMAW for the Tracking report)
+    objectName:
+      in: path
+      name: objectName
+      required: true
+      schema:
+        type: string
+      description: sObject API name (e.g. rXTMS__Load__c, rXTMS__Carrier__c)
+    recordId:
+      in: path
+      name: recordId
+      required: true
+      schema:
+        type: string
+      description: 15- or 18-character Salesforce record Id
+
+  schemas:
+    ReportDescribe:
+      type: object
+      additionalProperties: true
+      properties:
+        reportMetadata:
+          type: object
+          additionalProperties: true
+        reportTypeMetadata:
+          type: object
+          additionalProperties: true
+        reportExtendedMetadata:
+          type: object
+          additionalProperties: true
+
+    ReportRunRequest:
+      type: object
+      additionalProperties: true
+      properties:
+        reportMetadata:
+          type: object
+          additionalProperties: true
+          description: Optional metadata overrides (filters, scope) for this run
+
+    ReportResults:
+      type: object
+      additionalProperties: true
+      properties:
+        attributes:
+          type: object
+          additionalProperties: true
+        allData:
+          type: boolean
+        factMap:
+          type: object
+          additionalProperties: true
+        groupingsAcross:
+          type: object
+          additionalProperties: true
+        groupingsDown:
+          type: object
+          additionalProperties: true
+        hasDetailRows:
+          type: boolean
+        reportMetadata:
+          type: object
+          additionalProperties: true
+
+    QueryResult:
+      type: object
+      properties:
+        totalSize:
+          type: integer
+        done:
+          type: boolean
+        nextRecordsUrl:
+          type: string
+        records:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      required: [totalSize, done, records]
