@@ -17,17 +17,36 @@ IMPORTANT
   Open the mass-post.html in this folder instead.
 
 WORK-PC SETUP (one time)
-  1. Drop this whole folder somewhere on the work PC.
-     Anywhere works - Desktop, Documents, even inside
+  1. EXTRACT the zip - don't run from inside the preview.
+     Right-click  dat-pp-cli-launcher.zip  ->  Extract All...
+     Pick a real folder: Desktop, Documents, or inside
      "OneDrive - Bay & Bay Transportation" (the & is fine).
-  2. Double-click  start-dat-daemons.bat
-     - Windows SmartScreen may warn about dat-pp-cli.exe.
-       Click "More info" -> "Run anyway".
+     Double-clicking files INSIDE the zip without extracting
+     puts them in a Windows temp folder where the daemon
+     can't find its siblings - the .bat will refuse to run
+     from there with a clear error.
+
+  2. Make sure dat-pp-cli.exe is in the extracted folder.
+     If you downloaded it from the GitHub release as
+     dat-pp-cli-v1.0.0.exe, you can either rename it to
+     dat-pp-cli.exe OR leave it as-is - the .bat now
+     accepts either name.
+
+  3. Double-click  start-dat-daemons.bat
+     - FIRST TIME ONLY: Windows SmartScreen may warn
+       "Windows protected your PC". Normal for any unsigned
+       .exe. Click "More info" -> "Run anyway".
+       Your antivirus might also flag dat-pp-cli.exe -
+       allow it / mark as safe.
      - Two minimized cmd windows appear in the taskbar
        (rate daemon + auth-loop). LEAVE THEM ALONE.
-     - A bigger status window opens last. LEAVE IT OPEN.
+     - A bigger status window opens last with [OK] / [FAIL]
+       lines for each port. LEAVE IT OPEN.
        This window IS the daemons. Pressing any key in
        it = SHUTDOWN. Minimize it instead.
+     - If you see [FAIL] next to a daemon, look at the
+       matching minimized cmd window for the real error
+       (e.g. "port already in use", parse errors, etc).
 
 EVERY DAY
   1. Make sure start-dat-daemons.bat is running. If the
