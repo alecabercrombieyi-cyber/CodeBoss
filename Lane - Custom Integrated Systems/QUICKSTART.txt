@@ -1,0 +1,88 @@
+==========================================================
+  dat-pp-cli launcher  -  quick start
+==========================================================
+
+WHAT'S IN THIS FOLDER
+  start-dat-daemons.bat   <- you double-click this
+  _auth-loop.bat          <- helper, runs automatically
+  dat-pp-cli.exe          <- the daemon
+  mass-post.html          <- open this in Chrome
+  QUICKSTART.txt          <- this file
+
+IMPORTANT
+  The DAT-pp-cli daemon only works when Mass Post is
+  opened as a LOCAL FILE (file:///...).  Do NOT use
+  logisticssuitev1.pages.dev for this -- HTTPS pages
+  can't talk to the local daemon (browser blocks it).
+  Open the mass-post.html in this folder instead.
+
+WORK-PC SETUP (one time)
+  1. EXTRACT the zip - don't run from inside the preview.
+     Right-click  dat-pp-cli-launcher.zip  ->  Extract All...
+     Pick a real folder: Desktop, Documents, or inside
+     "OneDrive - Bay & Bay Transportation" (the & is fine).
+     Double-clicking files INSIDE the zip without extracting
+     puts them in a Windows temp folder where the daemon
+     can't find its siblings - the .bat will refuse to run
+     from there with a clear error.
+
+  2. Make sure dat-pp-cli.exe is in the extracted folder.
+     If you downloaded it from the GitHub release as
+     dat-pp-cli-v1.0.0.exe, you can either rename it to
+     dat-pp-cli.exe OR leave it as-is - the .bat now
+     accepts either name.
+
+  3. Double-click  start-dat-daemons.bat
+     - FIRST TIME ONLY: Windows SmartScreen may warn
+       "Windows protected your PC". Normal for any unsigned
+       .exe. Click "More info" -> "Run anyway".
+       Your antivirus might also flag dat-pp-cli.exe -
+       allow it / mark as safe.
+     - Two minimized cmd windows appear in the taskbar
+       (rate daemon + auth-loop). LEAVE THEM ALONE.
+     - A bigger status window opens last with [OK] / [FAIL]
+       lines for each port. LEAVE IT OPEN.
+       This window IS the daemons. Pressing any key in
+       it = SHUTDOWN. Minimize it instead.
+     - If you see [FAIL] next to a daemon, look at the
+       matching minimized cmd window for the real error
+       (e.g. "port already in use", parse errors, etc).
+
+EVERY DAY
+  1. Make sure start-dat-daemons.bat is running. If the
+     status window isn't there, double-click the .bat again.
+  2. Open  one.dat.com  in Chrome (logged in).
+     Click your "Grab DAT Token" bookmark.
+     (If you don't have the bookmark yet, open
+      http://127.0.0.1:53682/install  in Chrome and
+      drag the button onto your bookmarks bar - one time.)
+  3. Double-click  mass-post.html  in this folder.
+     It will open in Chrome as file:///...
+     Click "Express Export" then "Get DAT Rates".
+     Rates fill in directly - no clipboard, no tab switching.
+
+WHEN THE TOKEN EXPIRES (~every 30 min)
+  Just click "Grab DAT Token" again on one.dat.com.
+  The auth-loop is always listening; it'll catch the
+  new token and save it.
+
+TO STOP THE DAEMONS
+  Press any key in the status window, or close it.
+  All three windows go away.
+
+TROUBLESHOOTING
+  Mass Post falls back to the bookmarklet scrape:
+    -> You opened logisticssuitev1.pages.dev. Use the
+       local mass-post.html in this folder instead.
+    -> Or the daemon isn't running. Restart the .bat.
+
+  "Could not reach dat-pp-cli on :53682" in Mass Post:
+    -> Token might already be saved. Try "Get DAT Rates"
+       anyway. If that works, ignore.
+    -> If not, restart the .bat.
+
+  Mass Post hangs / spins forever on "Get DAT Rates":
+    -> DAT rate-limited the daemon (too many lanes at
+       once). Wait it out, or filter the report to fewer
+       lanes (Today only, etc).
+==========================================================

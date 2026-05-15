@@ -105,13 +105,26 @@ body {
   align-items: center;
   gap: 12px;
 }
+.logo-wrap {
+  position: relative;
+  width: 44px; height: 44px;
+  flex-shrink: 0;
+}
+.logo-wrap canvas {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+}
 .logo {
-  width: 38px; height: 38px;
-  background: linear-gradient(135deg, var(--bolt), var(--electric));
-  border-radius: 10px;
+  width: 44px; height: 44px;
+  background: transparent;
   display: flex; align-items: center; justify-content: center;
-  font-size: 20px;
-  box-shadow: 0 0 20px rgba(6,182,212,0.3);
+  font-size: 28px;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 6px rgba(6,182,212,0.5));
 }
 .header h1 {
   font-size: 20px;
@@ -2962,6 +2975,143 @@ body {
   color: #fff;
 }
 
+/* Bulk Export — preview table with DAT rates */
+#bulk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  font-family: 'Inter', 'Outfit', sans-serif;
+}
+#bulk-table thead {
+  position: sticky; top: 0;
+  background: var(--surface2);
+  z-index: 2;
+}
+#bulk-table thead th {
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+#bulk-table thead th.num { text-align: right; }
+#bulk-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.12s;
+}
+#bulk-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+#bulk-table tbody tr.no-data { background: rgba(251, 146, 60, 0.05); }
+#bulk-table tbody td {
+  padding: 6px 10px;
+  color: var(--text);
+  vertical-align: middle;
+}
+#bulk-table tbody td.num {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  white-space: nowrap;
+}
+#bulk-table .bulk-load-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+#bulk-table .bulk-equip {
+  font-size: 9px;
+  font-weight: 900;
+  color: #06B6D4;
+  background: rgba(6, 182, 212, 0.1);
+  padding: 2px 5px;
+  border-radius: 3px;
+  display: inline-block;
+}
+#bulk-table .bulk-lane {
+  color: var(--text);
+  font-weight: 500;
+}
+#bulk-table .bulk-spot {
+  color: #A78BFA;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+#bulk-table .bulk-spot.no-data {
+  color: #F97316;
+  font-weight: 600;
+  font-size: 10px;
+}
+#bulk-table .bulk-delta.pos { color: #22C55E; }
+#bulk-table .bulk-delta.neg { color: #F87171; }
+#bulk-table .bulk-delta.zero { color: var(--text-muted); }
+
+/* Inline rate input for bulk rows */
+.bulk-rate-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+.bulk-rate-input {
+  width: 70px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  padding: 3px 6px;
+  border-radius: 4px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.bulk-rate-input::-webkit-inner-spin-button,
+.bulk-rate-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.bulk-rate-input:focus {
+  border-color: var(--bolt);
+  background: var(--surface);
+  box-shadow: 0 0 0 2px var(--bolt-glow);
+}
+.bulk-rate-step {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 800;
+  width: 18px; height: 18px;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.bulk-rate-step:hover {
+  border-color: var(--bolt);
+  color: var(--bolt-bright);
+  background: rgba(6, 182, 212, 0.08);
+}
+
+/* Lookup status spinner */
+.bulk-status-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--bolt-bright);
+  font-weight: 600;
+}
+.bulk-status-progress::before {
+  content: '';
+  width: 10px; height: 10px;
+  border: 2px solid var(--bolt-bright);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: bulk-spin 0.7s linear infinite;
+}
+@keyframes bulk-spin { to { transform: rotate(360deg); } }
+
 /* ── TOAST ── */
 .toast {
   position: fixed;
@@ -3043,14 +3193,17 @@ body {
 <!-- HEADER -->
 <div class="header">
   <div class="header-left">
-    <div class="logo">⚡</div>
+    <div class="logo-wrap">
+      <canvas id="logo-sparks" width="80" height="80"></canvas>
+      <div class="logo">⚡</div>
+    </div>
     <h1>MASS POST</h1>
   </div>
   <div class="header-actions">
     <button class="btn btn-primary" onclick="startSFDownload()">⚡ Pull Report</button>
     <button class="btn" onclick="openFilePicker()">📁 Load File</button>
     <button class="btn btn-express" onclick="startExpressUpload(event)" title="Pick a report and jump straight to Bulk Export (Shift+click to replay tutorial)">🚀 Express Export</button>
-    <button class="btn" onclick="openBulkExport()" id="bulk-btn" style="display:none;">📤 Bulk Export</button>
+    <button class="btn" onclick="openBulkExport()" id="bulk-btn">📤 Bulk Export</button>
     <button class="btn btn-bell" id="bell-btn" onclick="toggleNotifications(event)" title="Notifications">
       <span class="bell-icon">🔔</span>
       <span class="bell-count" id="bell-count" style="display:none;">0</span>
@@ -3169,8 +3322,56 @@ body {
 
   <div class="settings-section">
     <h3>⚡ Fill DAT Bookmarklet</h3>
-    <p>Drag this button to your bookmarks bar. On the DAT form: click it → Ctrl+V → OK.</p>
+    <p>Drag this button to your bookmarks bar. On the DAT posting form: click it → Ctrl+V → OK. Used for single-load "Post Alone" from the row dropdown.</p>
     <a class="bookmarklet-link" id="bookmarklet-anchor" href="#" onclick="event.preventDefault(); showToast('⬆ Drag this to your bookmarks bar!');">⚡ Fill DAT</a>
+  </div>
+
+  <div class="settings-section">
+    <h3>🔄 Mass Post Helper Bookmarklet</h3>
+    <p>Drag this button to your bookmarks bar too. Runs on <strong>DAT Tools</strong> (for bulk rate lookups) AND <strong>Salesforce list view</strong> (for filling posted rates). Detects context automatically — one bookmarklet, two jobs.</p>
+    <a class="bookmarklet-link" id="helper-bookmarklet-anchor" href="#" onclick="event.preventDefault(); showToast('⬆ Drag this to your bookmarks bar!');" style="background:linear-gradient(135deg,#A78BFA,#7C3AED);">🔄 Mass Post Helper</a>
+  </div>
+
+  <div class="settings-section">
+    <h3>💰 Rate Lookup Formula</h3>
+    <p>How to calculate the suggested posted rate from DAT's Quick Rate Lookup.</p>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+      <label style="font-size:11px;color:var(--text-dim);">Base:</label>
+      <select id="rate-base" onchange="saveRateFormula()" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;">
+        <option value="spot">Spot Average</option>
+        <option value="spotLow">Spot Low</option>
+        <option value="spotHigh">Spot High</option>
+        <option value="contract">Contract Average</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+      <label style="font-size:11px;color:var(--text-dim);">Adjust:</label>
+      <select id="rate-adjust-type" onchange="saveRateFormula()" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;">
+        <option value="flat">Flat $</option>
+        <option value="pct">Percent %</option>
+      </select>
+      <input type="number" id="rate-adjust-value" step="1" onchange="saveRateFormula()" style="width:80px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;" value="-150">
+      <span style="font-size:11px;color:var(--text-muted);">(negative = under market)</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+      <label style="font-size:11px;color:var(--text-dim);">Round:</label>
+      <select id="rate-round-dir" onchange="saveRateFormula()" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;">
+        <option value="down">Down</option>
+        <option value="nearest">Nearest</option>
+        <option value="up">Up</option>
+      </select>
+      <label style="font-size:11px;color:var(--text-dim);">to nearest:</label>
+      <select id="rate-round-to" onchange="saveRateFormula()" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;">
+        <option value="25">$25</option>
+        <option value="50" selected>$50</option>
+        <option value="100">$100</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <label style="font-size:11px;color:var(--text-dim);">Floor (min rate, optional):</label>
+      <input type="number" id="rate-floor" step="50" onchange="saveRateFormula()" placeholder="0 = no floor" style="width:100px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;">
+    </div>
+    <div id="rate-formula-preview" style="margin-top:10px;font-size:11px;color:var(--bolt-bright);font-family:'JetBrains Mono',monospace;"></div>
   </div>
 
   <div class="settings-section">
@@ -3216,11 +3417,13 @@ body {
 
 <!-- BULK EXPORT MODAL -->
 <div class="reply-overlay" id="bulk-overlay" onclick="closeBulkExport()"></div>
-<div class="reply-modal" id="bulk-modal" style="width:800px;">
+<div class="reply-modal" id="bulk-modal" style="width:900px;max-height:90vh;overflow-y:auto;">
   <button class="settings-close" onclick="closeBulkExport()">&times;</button>
-  <h2>📤 Bulk Export for DAT</h2>
-  <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;">Generates a CSV with separate Origin City, Origin State, Destination City, Destination State columns for DAT bulk upload.</p>
-  <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+  <h2>📤 Bulk Export — DAT + Salesforce</h2>
+  <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;">Look up market rates on DAT, review, then push to Salesforce and export for DAT.</p>
+
+  <!-- Date Filter Row -->
+  <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
     <div class="date-filter">
       <label>From</label>
       <input type="date" id="bulk-date-from" onchange="onBulkDateInputChange()">
@@ -3229,12 +3432,47 @@ body {
     </div>
     <button class="btn-today" id="bulk-today-btn" onclick="toggleBulkToday()">Today</button>
     <button class="btn-today" id="bulk-tomorrow-btn" onclick="toggleBulkTomorrow()">Tomorrow</button>
-    <button class="btn btn-primary" onclick="generateBulkCSV()">Generate CSV</button>
+    <button class="btn btn-sm" onclick="buildBulkRows()">Load Lanes</button>
   </div>
-  <div id="bulk-preview" style="font-size:12px;color:var(--text-dim);margin-bottom:12px;"></div>
+
+  <!-- Lookup Actions -->
+  <div id="bulk-lookup-bar" style="display:none;padding:12px 14px;margin-bottom:12px;background:linear-gradient(135deg,rgba(167,139,250,0.08),rgba(37,99,235,0.04));border:1px solid rgba(167,139,250,0.25);border-radius:10px;">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-sm" id="bulk-get-rates-btn" onclick="bulkGetDATRates()" style="background:linear-gradient(135deg,#A78BFA,#7C3AED);border-color:#A78BFA;color:#fff;font-weight:700;">📊 Get DAT Rates</button>
+      <button class="btn btn-sm" id="bulk-paste-rates-btn" onclick="bulkPasteDATRates()" style="opacity:0.5;" disabled>📋 Paste Rates</button>
+      <span id="bulk-lookup-status" style="font-size:11px;color:var(--text-muted);flex:1;"></span>
+    </div>
+    <div id="bulk-lookup-instruction" style="display:none;font-size:11px;color:var(--text);margin-top:8px;padding:8px 10px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:6px;line-height:1.5;">
+      <strong style="color:#FBBF24;">Step 1:</strong> Switch to your DAT Tools tab (<code>one.dat.com/tools</code>)<br>
+      <strong style="color:#FBBF24;">Step 2:</strong> Click the <strong>🔄 Mass Post Helper</strong> bookmarklet<br>
+      <strong style="color:#FBBF24;">Step 3:</strong> Wait for it to finish (~60-90s), then come back and click <strong>📋 Paste Rates</strong>
+    </div>
+  </div>
+
+  <!-- Preview Table -->
+  <div id="bulk-preview" style="font-size:12px;color:var(--text-dim);margin-bottom:8px;"></div>
   <div id="bulk-table-wrap" style="max-height:400px;overflow:auto;border:1px solid var(--border);border-radius:8px;display:none;">
     <table id="bulk-table" style="width:100%;border-collapse:collapse;font-size:11px;">
     </table>
+  </div>
+
+  <!-- Bulk Adjustment Bar -->
+  <div id="bulk-adjust-bar" style="display:none;padding:10px 12px;margin-top:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <span style="font-size:11px;color:var(--text-dim);font-weight:600;">Adjust all:</span>
+      <button class="btn btn-sm" onclick="bulkAdjustAll(-50)">−$50 all</button>
+      <button class="btn btn-sm" onclick="bulkAdjustAll(50)">+$50 all</button>
+      <button class="btn btn-sm" onclick="bulkApplyFormula()" style="margin-left:10px;" title="Apply the formula from Settings (e.g. Spot −$150, round down to $50)">⚡ Apply formula</button>
+      <button class="btn btn-sm" onclick="bulkResetToDefault()" title="Reset rates to the raw DAT Spot values">↺ Reset to raw DAT</button>
+      <span id="bulk-totals" style="margin-left:auto;font-size:11px;color:var(--text-dim);"></span>
+    </div>
+  </div>
+
+  <!-- Final Actions -->
+  <div id="bulk-actions-bar" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);gap:10px;flex-wrap:wrap;">
+    <button class="btn btn-primary" onclick="bulkCopyToSalesforce()" style="background:linear-gradient(135deg,#22C55E,#16A34A);border-color:#22C55E;">💰 Copy to Salesforce</button>
+    <button class="btn btn-primary" onclick="generateBulkCSV()">📥 Download CSV for DAT</button>
+    <span style="font-size:11px;color:var(--text-muted);margin-left:auto;align-self:center;">Salesforce auto-fill requires the Mass Post Helper bookmarklet</span>
   </div>
 </div>
 
@@ -3559,6 +3797,102 @@ function storeGet(key) {
   }
   buildBookmarklet();
   renderCustCommList();
+  loadRateFormula();
+
+  // ── Lightning arcs on logo ──
+  (function initLogoSparks() {
+    var canvas = document.getElementById('logo-sparks');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    var W = 80, H = 80;
+
+    // Define the ⚡ thunderbolt outline as a polygon (in 80x80 canvas space, centered at 40,40)
+    var bolt = [
+      { x: 47, y: 6 },   // top right
+      { x: 26, y: 41 },  // left middle
+      { x: 39, y: 39 },  // inner step right
+      { x: 32, y: 74 },  // bottom point
+      { x: 54, y: 39 },  // right middle
+      { x: 41, y: 41 },  // inner step left
+    ];
+    var edgeCount = bolt.length;
+
+    // Get a random point along the bolt outline + outward normal
+    function boltPoint() {
+      var ei = Math.floor(Math.random() * edgeCount);
+      var a = bolt[ei], b = bolt[(ei + 1) % edgeCount];
+      var t = Math.random();
+      var px = a.x + (b.x - a.x) * t;
+      var py = a.y + (b.y - a.y) * t;
+      // Outward normal (perpendicular to edge, pointing away from center)
+      var dx = b.x - a.x, dy = b.y - a.y;
+      var len = Math.hypot(dx, dy) || 1;
+      var nx = -dy / len, ny = dx / len;
+      // Make sure normal points outward (away from center 40,40)
+      var cx = 40, cy = 40;
+      if ((px + nx - cx) * (px + nx - cx) + (py + ny - cy) * (py + ny - cy) <
+          (px - cx) * (px - cx) + (py - cy) * (py - cy)) {
+        nx = -nx; ny = -ny;
+      }
+      return { x: px, y: py, nx: nx, ny: ny };
+    }
+
+    function drawBolt(x1, y1, x2, y2, jag, depth) {
+      if (depth <= 0 || Math.hypot(x2 - x1, y2 - y1) < 3) {
+        ctx.lineTo(x2, y2);
+        return;
+      }
+      var mx = (x1 + x2) / 2 + (Math.random() - 0.5) * jag;
+      var my = (y1 + y2) / 2 + (Math.random() - 0.5) * jag;
+      drawBolt(x1, y1, mx, my, jag * 0.55, depth - 1);
+      drawBolt(mx, my, x2, y2, jag * 0.55, depth - 1);
+    }
+
+    var colors = ['rgba(6,245,255,0.9)', 'rgba(167,139,250,0.7)', 'rgba(255,255,255,0.85)'];
+
+    function drawFrame() {
+      ctx.clearRect(0, 0, W, H);
+      var arcCount = 1 + Math.floor(Math.random() * 2);
+      for (var a = 0; a < arcCount; a++) {
+        var p = boltPoint();
+        var type = Math.random();
+        var x2, y2;
+        if (type < 0.55) {
+          // Crawl along the bolt outline to another point
+          var p2 = boltPoint(); x2 = p2.x; y2 = p2.y;
+        } else if (type < 0.8) {
+          // Spark shooting outward from the bolt edge
+          var dist = 3 + Math.random() * 4;
+          x2 = p.x + p.nx * dist; y2 = p.y + p.ny * dist;
+        } else {
+          // Tiny crackle near the surface
+          x2 = p.x + (Math.random() - 0.5) * 5;
+          y2 = p.y + (Math.random() - 0.5) * 5;
+        }
+        var color = colors[Math.floor(Math.random() * colors.length)];
+        var thick = 0.3 + Math.random() * 0.5;
+        // Glow
+        ctx.save();
+        ctx.shadowColor = color; ctx.shadowBlur = 3 + Math.random() * 3;
+        ctx.strokeStyle = color; ctx.lineWidth = thick;
+        ctx.globalAlpha = 0.4 + Math.random() * 0.35;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y);
+        drawBolt(p.x, p.y, x2, y2, 4 + Math.random() * 3, 3);
+        ctx.stroke(); ctx.restore();
+        // Core
+        ctx.save();
+        ctx.shadowColor = '#fff'; ctx.shadowBlur = 2;
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = thick * 0.3;
+        ctx.globalAlpha = 0.3 + Math.random() * 0.4;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y);
+        drawBolt(p.x, p.y, x2, y2, 4 + Math.random() * 3, 3);
+        ctx.stroke(); ctx.restore();
+      }
+    }
+    setInterval(drawFrame, 110);
+    drawFrame();
+  })();
 
   // Load profile
   var savedName = storeGet('mp_user_name');
@@ -5822,11 +6156,13 @@ function applyBulkToggles() {
 function toggleBulkToday() {
   bulkTodayOn = !bulkTodayOn;
   applyBulkToggles();
+  if (document.getElementById('bulk-modal').classList.contains('open')) buildBulkRows();
 }
 
 function toggleBulkTomorrow() {
   bulkTomorrowOn = !bulkTomorrowOn;
   applyBulkToggles();
+  if (document.getElementById('bulk-modal').classList.contains('open')) buildBulkRows();
 }
 
 // Clear preset toggles when user manually edits the date pickers
@@ -5849,17 +6185,50 @@ function onBulkDateInputChange() {
   var tmBtn = document.getElementById('bulk-tomorrow-btn');
   if (tBtn) tBtn.classList.toggle('active', bulkTodayOn);
   if (tmBtn) tmBtn.classList.toggle('active', bulkTomorrowOn);
+  if (document.getElementById('bulk-modal').classList.contains('open')) buildBulkRows();
 }
 
 function openBulkExport() {
-  document.getElementById('bulk-overlay').classList.add('open');
-  document.getElementById('bulk-modal').classList.add('open');
-  // Default: Today toggle on, Tomorrow off
-  bulkTodayOn = true;
-  bulkTomorrowOn = false;
-  applyBulkToggles();
-  document.getElementById('bulk-table-wrap').style.display = 'none';
-  document.getElementById('bulk-preview').textContent = '';
+  try {
+    // Close any other modals that might be in the way
+    var mapOv = document.getElementById('mapping-modal-overlay');
+    var mapModal = document.getElementById('mapping-modal');
+    if (mapOv) mapOv.classList.remove('open');
+    if (mapModal) mapModal.classList.remove('open');
+    document.getElementById('bulk-overlay').classList.add('open');
+    document.getElementById('bulk-modal').classList.add('open');
+    // Default: Today toggle on, Tomorrow off
+    bulkTodayOn = true;
+    bulkTomorrowOn = false;
+    applyBulkToggles();
+    // Reset rate flow state
+    _bulkRows = [];
+    _bulkDATRates = {};
+    var setDisplay = function(id, val) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = val;
+    };
+    var setText = function(id, val) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    setDisplay('bulk-table-wrap', 'none');
+    setText('bulk-preview', '');
+    setDisplay('bulk-lookup-bar', 'none');
+    setDisplay('bulk-adjust-bar', 'none');
+    setDisplay('bulk-actions-bar', 'none');
+    setDisplay('bulk-lookup-instruction', 'none');
+    setText('bulk-lookup-status', '');
+    var pasteBtn = document.getElementById('bulk-paste-rates-btn');
+    if (pasteBtn) { pasteBtn.disabled = true; pasteBtn.style.opacity = '0.5'; }
+    // Load lanes for the current date filter
+    setTimeout(function() {
+      try { buildBulkRows(); } catch(e) { console.error('buildBulkRows error:', e); showToast('⚠ Error loading lanes: ' + e.message); }
+    }, 100);
+  } catch (e) {
+    console.error('openBulkExport error:', e);
+    showToast('⚠ Error opening Bulk Export: ' + e.message);
+  }
 }
 
 function closeBulkExport() {
@@ -5889,11 +6258,132 @@ function splitCityState(str) {
   return { city: str, state: '' };
 }
 
-function generateBulkCSV() {
+// ══════════════════════════════════════════════
+// BULK RATE LOOKUP FLOW
+// ══════════════════════════════════════════════
+var _bulkRows = [];       // [{loadId, load, origin, destination, equipment, datEquip, lane, currentRate, suggestedRate, datData}]
+var _bulkDATRates = {};   // { laneKey: {spot, spotLow, spotHigh, contract, ...} }
+var _rateFormula = { base: 'spot', adjustType: 'flat', adjustValue: -150, roundDir: 'down', roundTo: 50, floor: 0 };
+
+// Map Salesforce equipment → DAT Tools dropdown (Van / Reefer / Flatbed)
+// Returns { dat: 'Van'|'Reefer'|'Flatbed'|null, display: 'V'|'R'|'VR'|'F'|'SB' }
+// dat=null means no DAT rate lookup available for this equipment type
+function mapEquipmentToDAT(eq) {
+  if (!eq) return { dat: 'Van', display: 'V' };
+  var raw = String(eq);
+  var s = raw.toUpperCase().replace(/[^A-Z]/g, '');
+  // Straight Box Truck — no DAT rates available
+  if (s === 'SB' || /straight.*box|box.*truck/i.test(raw)) {
+    return { dat: null, display: 'SB' };
+  }
+  // Check combos first — VR, V/R, Van/Reefer → look up as Van, display as VR
+  if (/VR|V.*R|R.*V/.test(s) || /van.*reefer|reefer.*van/i.test(raw)) {
+    return { dat: 'Van', display: 'VR' };
+  }
+  // Reefer before Flatbed (since "Reefer" contains the letter F)
+  if (s === 'R' || /reefer/i.test(raw)) {
+    return { dat: 'Reefer', display: 'R' };
+  }
+  if (/flat|step|hotshot/i.test(raw) || /^(F[A-Z]?|SD)$/.test(s)) {
+    return { dat: 'Flatbed', display: 'F' };
+  }
+  return { dat: 'Van', display: 'V' };
+}
+
+// Canonical key for deduping lanes (so multiple loads on the same lane → one lookup)
+function laneKey(origin, destination, datEquip) {
+  return (origin || '').toLowerCase().replace(/\s+/g, ' ').trim()
+    + '|' + (destination || '').toLowerCase().replace(/\s+/g, ' ').trim()
+    + '|' + (datEquip || '').toLowerCase();
+}
+
+// Apply current rate formula to DAT data → suggested rate
+function applyRateFormula(datData) {
+  if (!datData || datData.nodata) return null;
+  var base = 0;
+  switch (_rateFormula.base) {
+    case 'spotLow':   base = datData.spotLow || datData.spot; break;
+    case 'spotHigh':  base = datData.spotHigh || datData.spot; break;
+    case 'contract':  base = datData.contract || datData.spot; break;
+    case 'spot':
+    default:          base = datData.spot; break;
+  }
+  if (!base || base <= 0) return null;
+  // Adjustment
+  var adjusted = base;
+  if (_rateFormula.adjustType === 'pct') {
+    adjusted = base * (1 + _rateFormula.adjustValue / 100);
+  } else {
+    adjusted = base + _rateFormula.adjustValue;
+  }
+  // Rounding
+  var step = _rateFormula.roundTo || 50;
+  var rounded;
+  if (_rateFormula.roundDir === 'up')        rounded = Math.ceil(adjusted / step) * step;
+  else if (_rateFormula.roundDir === 'down') rounded = Math.floor(adjusted / step) * step;
+  else                                       rounded = Math.round(adjusted / step) * step;
+  // Floor
+  if (_rateFormula.floor && rounded < _rateFormula.floor) rounded = _rateFormula.floor;
+  return rounded;
+}
+
+// Format the rate formula preview text
+function updateRateFormulaPreview() {
+  var el = document.getElementById('rate-formula-preview');
+  if (!el) return;
+  var baseLabel = { spot: 'Spot Avg', spotLow: 'Spot Low', spotHigh: 'Spot High', contract: 'Contract' }[_rateFormula.base] || 'Spot Avg';
+  var adj = _rateFormula.adjustValue;
+  var adjStr = adj >= 0 ? '+' + adj : adj;
+  var adjSuffix = _rateFormula.adjustType === 'pct' ? '%' : '';
+  var roundStr = _rateFormula.roundDir + ' to $' + _rateFormula.roundTo;
+  var floorStr = _rateFormula.floor > 0 ? ', floor $' + _rateFormula.floor : '';
+  el.textContent = baseLabel + ' ' + adjStr + adjSuffix + ', round ' + roundStr + floorStr;
+}
+
+function saveRateFormula() {
+  if (!_rateFormula) {
+    _rateFormula = { base: 'spot', adjustType: 'flat', adjustValue: -150, roundDir: 'down', roundTo: 50, floor: 0 };
+  }
+  var v = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+  _rateFormula.base = v('rate-base') || 'spot';
+  _rateFormula.adjustType = v('rate-adjust-type') || 'flat';
+  _rateFormula.adjustValue = parseFloat(v('rate-adjust-value')) || 0;
+  _rateFormula.roundDir = v('rate-round-dir') || 'down';
+  _rateFormula.roundTo = parseInt(v('rate-round-to'), 10) || 50;
+  _rateFormula.floor = parseFloat(v('rate-floor')) || 0;
+  storeSet('mp_rate_formula', JSON.stringify(_rateFormula));
+  updateRateFormulaPreview();
+}
+
+function loadRateFormula() {
+  // Lazy-init in case this is called during init before the var assignment below has run
+  if (!_rateFormula) {
+    _rateFormula = { base: 'spot', adjustType: 'flat', adjustValue: -150, roundDir: 'down', roundTo: 50, floor: 0 };
+  }
+  var saved = storeGet('mp_rate_formula');
+  if (saved) {
+    try {
+      var f = JSON.parse(saved);
+      for (var k in f) if (f.hasOwnProperty(k)) _rateFormula[k] = f[k];
+    } catch(e) {}
+  }
+  // Reflect in UI (only if elements exist — they might not during first init)
+  var setVal = function(id, v) { var el = document.getElementById(id); if (el) el.value = v; };
+  setVal('rate-base', _rateFormula.base);
+  setVal('rate-adjust-type', _rateFormula.adjustType);
+  setVal('rate-adjust-value', _rateFormula.adjustValue);
+  setVal('rate-round-dir', _rateFormula.roundDir);
+  setVal('rate-round-to', _rateFormula.roundTo);
+  setVal('rate-floor', _rateFormula.floor || '');
+  updateRateFormulaPreview();
+}
+
+// Build the initial bulk rows from filtered loads (called when modal opens or filter changes)
+function buildBulkRows() {
   var dateFrom = document.getElementById('bulk-date-from').value;
   var dateTo = document.getElementById('bulk-date-to').value;
 
-  // Filter loads by date AND exclude booked loads (they're already covered)
+  // Filter loads by date AND exclude booked loads
   var filtered = [];
   var skippedBooked = 0;
   allLoads.forEach(function(load) {
@@ -5905,9 +6395,358 @@ function generateBulkCSV() {
     filtered.push(load);
   });
 
-  if (filtered.length === 0) {
-    document.getElementById('bulk-preview').textContent = '⚠ No loads found for the selected date range.';
-    document.getElementById('bulk-table-wrap').style.display = 'none';
+  _bulkRows = filtered.map(function(load) {
+    var loadId = getMapped(load, 'referenceId') || '';
+    var origin = formatCityST(getMapped(load, 'origin') || '');
+    var destination = formatCityST(getMapped(load, 'destination') || '');
+    var equipment = getMapped(load, 'equipType') || '';
+    var equipMap = mapEquipmentToDAT(equipment);
+    var currentRateRaw = (getMapped(load, 'rate') || '').toString().replace(/[\$,]/g, '');
+    var currentRate = parseFloat(currentRateRaw) || 0;
+    return {
+      loadId: loadId,
+      load: load,
+      origin: origin,
+      destination: destination,
+      equipment: equipment,
+      datEquip: equipMap.dat,
+      displayEquip: equipMap.display,
+      lane: origin + ' → ' + destination,
+      laneKey: laneKey(origin, destination, equipMap.dat),
+      currentRate: currentRate,
+      suggestedRate: currentRate,
+      datData: null
+    };
+  });
+
+  renderBulkTable();
+
+  // Show/hide lookup bar based on having rows
+  if (_bulkRows.length > 0) {
+    document.getElementById('bulk-lookup-bar').style.display = '';
+    updateBulkLookupStatus();
+  } else {
+    document.getElementById('bulk-lookup-bar').style.display = 'none';
+  }
+}
+
+function updateBulkLookupStatus() {
+  var uniqueLanes = {};
+  _bulkRows.forEach(function(r) { uniqueLanes[r.laneKey] = true; });
+  var laneCount = Object.keys(uniqueLanes).length;
+  var loadCount = _bulkRows.length;
+  var filled = 0;
+  _bulkRows.forEach(function(r) { if (r.datData) filled++; });
+  var el = document.getElementById('bulk-lookup-status');
+  if (!el) return;
+  if (filled === 0) {
+    el.textContent = loadCount + ' loads · ' + laneCount + ' unique lanes to look up';
+  } else if (filled < loadCount) {
+    el.textContent = filled + ' / ' + loadCount + ' loads have DAT rates';
+  } else {
+    el.innerHTML = '<span style="color:#22C55E;font-weight:700;">✓ All ' + loadCount + ' loads have DAT rates</span>';
+  }
+}
+
+// Render the preview table
+function renderBulkTable() {
+  var wrap = document.getElementById('bulk-table-wrap');
+  var tbl = document.getElementById('bulk-table');
+  var prev = document.getElementById('bulk-preview');
+
+  if (_bulkRows.length === 0) {
+    wrap.style.display = 'none';
+    prev.textContent = '⚠ No loads found for the selected date range.';
+    document.getElementById('bulk-adjust-bar').style.display = 'none';
+    document.getElementById('bulk-actions-bar').style.display = 'none';
+    return;
+  }
+
+  var hasRates = _bulkRows.some(function(r) { return r.datData; });
+
+  var html = '<thead><tr>';
+  html += '<th>Date</th><th>Load #</th><th>Equip</th><th>Lane</th>';
+  html += '<th class="num">DAT / Benchmark</th><th class="num">Current Rate</th><th class="num">New Rate</th>';
+  html += '</tr></thead><tbody>';
+
+  _bulkRows.forEach(function(r, idx) {
+    var pu = getMapped(r.load, 'pickupDate') || '';
+    var puShort = '';
+    var norm = normalizeDateForFilter(pu);
+    if (norm) {
+      var d = new Date(norm + 'T12:00:00');
+      puShort = (d.getMonth()+1) + '/' + d.getDate();
+    }
+    var noData = r.datData && r.datData.nodata;
+    var hasDat = r.datData && !r.datData.nodata && r.datData.spot;
+    var rowCls = noData ? 'no-data' : '';
+
+    var spotCell;
+    if (hasDat) {
+      spotCell = '<span class="bulk-spot">$' + r.datData.spot.toLocaleString() + '</span>';
+      // Market change indicator: compare DAT Spot vs Current Rate
+      if (r.currentRate && r.currentRate > 0) {
+        var mktDelta = r.datData.spot - r.currentRate;
+        var mktPct = Math.abs(mktDelta / r.currentRate) * 100;
+        if (mktDelta !== 0) {
+          var arrow = mktDelta > 0 ? '↑' : '↓';
+          var arrowColor = mktDelta > 0 ? '#F87171' : '#22C55E'; // red = market up (costs more), green = market down
+          var sign = mktDelta > 0 ? '+' : '-';
+          var warn = mktPct >= 5 ? ' <span title="Market moved ' + Math.round(mktPct) + '% from your posted rate" style="cursor:help;">⚠️</span>' : '';
+          spotCell += '<span style="display:block;font-size:9px;margin-top:2px;color:' + arrowColor + ';font-weight:600;font-family:\'JetBrains Mono\',monospace;white-space:nowrap;">'
+            + arrow + ' ' + sign + '$' + Math.abs(Math.round(mktDelta)).toLocaleString()
+            + '<span style="color:var(--text-muted);font-weight:400;margin-left:3px;">(' + Math.round(mktPct) + '%)</span>'
+            + warn + '</span>';
+        }
+      }
+    } else if (noData) {
+      spotCell = '<span class="bulk-spot no-data">⚠ No data</span>';
+    } else {
+      spotCell = '<span style="color:var(--text-muted);font-size:10px;">—</span>';
+    }
+
+    // Current rate (Salesforce Posted Amount at the time the report was loaded)
+    var currentRateStr;
+    if (r.currentRate && r.currentRate > 0) {
+      currentRateStr = '<span style="color:var(--text-dim);font-family:\'JetBrains Mono\',monospace;">$' + Math.round(r.currentRate).toLocaleString() + '</span>';
+    } else {
+      currentRateStr = '<span style="color:var(--text-muted);">—</span>';
+    }
+
+    var rateVal = r.suggestedRate || 0;
+
+    html += '<tr class="' + rowCls + '" data-bulk-idx="' + idx + '">';
+    html += '<td>' + esc(puShort) + '</td>';
+    html += '<td><span class="bulk-load-id">' + esc(r.loadId) + '</span></td>';
+    html += '<td><span class="bulk-equip">' + esc(r.displayEquip) + '</span></td>';
+    html += '<td class="bulk-lane">' + esc(r.lane) + '</td>';
+    html += '<td class="num">' + spotCell + '</td>';
+    html += '<td class="num">' + currentRateStr + '</td>';
+    html += '<td class="num"><div class="bulk-rate-cell">';
+    html += '<button class="bulk-rate-step" onclick="bulkStepRate(' + idx + ',-50)" title="−$50">−</button>';
+    html += '<input class="bulk-rate-input" type="text" inputmode="numeric" value="' + (rateVal ? Math.round(rateVal) : '') + '" onchange="bulkOnRateInputChange(' + idx + ', this.value)" onfocus="this.select()">';
+    html += '<button class="bulk-rate-step" onclick="bulkStepRate(' + idx + ',50)" title="+$50">+</button>';
+    html += '</div></td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody>';
+  tbl.innerHTML = html;
+  wrap.style.display = '';
+
+  // Preview summary
+  var uniqueLanes = {}; _bulkRows.forEach(function(r) { uniqueLanes[r.laneKey] = true; });
+  prev.textContent = '✓ ' + _bulkRows.length + ' loads · ' + Object.keys(uniqueLanes).length + ' unique lanes';
+
+  // Adjust bar always visible once we have rows
+  document.getElementById('bulk-adjust-bar').style.display = '';
+  // Actions bar visible only after rates are loaded (or if user explicitly wants to skip)
+  var actionsBar = document.getElementById('bulk-actions-bar');
+  actionsBar.style.display = 'flex';
+
+  // Update totals
+  var totalRate = 0; _bulkRows.forEach(function(r) { totalRate += (r.suggestedRate || 0); });
+  var totEl = document.getElementById('bulk-totals');
+  if (totEl) {
+    totEl.textContent = _bulkRows.length + ' loads · Total posted: $' + Math.round(totalRate).toLocaleString();
+  }
+}
+
+// ── Per-row rate handlers ──
+function bulkStepRate(idx, delta) {
+  if (!_bulkRows[idx]) return;
+  var cur = _bulkRows[idx].suggestedRate || 0;
+  // Snap to nearest $50: +$50 click on $1,099 should go to $1,100 (next $50 up), not $1,149
+  var next;
+  if (delta > 0) {
+    next = Math.floor(cur / 50) * 50 + 50;  // round down, then add one step
+  } else {
+    next = Math.ceil(cur / 50) * 50 - 50;   // round up, then subtract one step
+  }
+  _bulkRows[idx].suggestedRate = Math.max(0, next);
+  renderBulkTable();
+}
+function bulkOnRateInputChange(idx, val) {
+  if (!_bulkRows[idx]) return;
+  var n = parseFloat(String(val).replace(/[^0-9.]/g, '')) || 0;
+  _bulkRows[idx].suggestedRate = n;
+  renderBulkTable();
+}
+
+// ── Bulk adjustment buttons ──
+function bulkAdjustAll(delta) {
+  _bulkRows.forEach(function(r) {
+    var cur = r.suggestedRate || 0;
+    var next;
+    if (delta > 0) {
+      next = Math.floor(cur / 50) * 50 + 50;
+    } else {
+      next = Math.ceil(cur / 50) * 50 - 50;
+    }
+    r.suggestedRate = Math.max(0, next);
+  });
+  renderBulkTable();
+  showToast((delta >= 0 ? '+' : '') + '$' + delta + ' applied to all rates (snapped to $50)');
+}
+function bulkResetToDefault() {
+  _bulkRows.forEach(function(r) {
+    if (r.datData && !r.datData.nodata && r.datData.spot) {
+      r.suggestedRate = r.datData.spot;
+    } else {
+      r.suggestedRate = r.currentRate || 0;
+    }
+  });
+  renderBulkTable();
+  showToast('↺ Reset to raw DAT Spot');
+}
+
+function bulkApplyFormula() {
+  var hits = 0;
+  _bulkRows.forEach(function(r) {
+    if (r.datData && !r.datData.nodata) {
+      var suggested = applyRateFormula(r.datData);
+      if (suggested) { r.suggestedRate = suggested; hits++; }
+    }
+  });
+  renderBulkTable();
+  showToast(hits > 0 ? '✓ Formula applied to ' + hits + ' loads' : '⚠ No formula-eligible data');
+}
+
+// ── Step 1: Get DAT rates (copy lane payload to clipboard) ──
+function bulkGetDATRates() {
+  if (_bulkRows.length === 0) { showToast('⚠ No loads to look up'); return; }
+  // Dedup lanes — skip equipment types with no DAT lookup (e.g. SB)
+  var laneMap = {};
+  _bulkRows.forEach(function(r) {
+    if (!r.datEquip) return; // no DAT lookup for this equipment type
+    if (!laneMap[r.laneKey]) {
+      laneMap[r.laneKey] = {
+        id: r.laneKey,
+        origin: r.origin,
+        destination: r.destination,
+        equipment: r.datEquip
+      };
+    }
+  });
+  var lanes = Object.keys(laneMap).map(function(k) { return laneMap[k]; });
+  var payload = JSON.stringify({ type: 'dat-lookup', lanes: lanes });
+
+  var doCopy = function() {
+    document.getElementById('bulk-lookup-instruction').style.display = '';
+    var statusEl = document.getElementById('bulk-lookup-status');
+    statusEl.innerHTML = '<span class="bulk-status-progress">Waiting for DAT bookmarklet...</span>';
+    var pasteBtn = document.getElementById('bulk-paste-rates-btn');
+    if (pasteBtn) { pasteBtn.disabled = false; pasteBtn.style.opacity = '1'; }
+    showToast('📊 ' + lanes.length + ' lane' + (lanes.length === 1 ? '' : 's') + ' copied — switch to DAT Tools and run the 🔄 Mass Post Helper bookmarklet');
+  };
+
+  try {
+    navigator.clipboard.writeText(payload).then(doCopy, function() {
+      // Fallback
+      var ta = document.createElement('textarea');
+      ta.value = payload;
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      doCopy();
+    });
+  } catch (e) {
+    var ta = document.createElement('textarea');
+    ta.value = payload;
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    doCopy();
+  }
+}
+
+// ── Step 2: Paste rates back from clipboard ──
+function bulkPasteDATRates() {
+  var ingest = function(raw) {
+    var payload;
+    try { payload = JSON.parse(raw); }
+    catch (e) { showToast('⚠ Clipboard did not contain DAT rate data. Run the bookmarklet first.'); return; }
+    if (!payload || payload.type !== 'dat-rates' || !payload.rates) {
+      showToast('⚠ Unexpected clipboard payload. Expected DAT rate results.');
+      return;
+    }
+    _bulkDATRates = payload.rates;
+    var filled = 0, noData = 0;
+    _bulkRows.forEach(function(r) {
+      var d = _bulkDATRates[r.laneKey];
+      if (!d) return;
+      r.datData = d;
+      if (d.nodata) {
+        noData++;
+        // Leave suggestedRate at currentRate (from Salesforce)
+      } else if (d.spot) {
+        // Populate "Your Rate" with the raw DAT Spot value so the user sees the real
+        // market number and applies adjustments themselves via the ±$50 steppers
+        // or bulk buttons. The formula-based default is available via "Reset to DAT default".
+        r.suggestedRate = d.spot;
+        filled++;
+      }
+    });
+    renderBulkTable();
+    updateBulkLookupStatus();
+    document.getElementById('bulk-lookup-instruction').style.display = 'none';
+    var msg = '✓ ' + filled + ' DAT rate' + (filled === 1 ? '' : 's') + ' loaded (raw Spot values)';
+    if (noData > 0) msg += ' · ' + noData + ' lane' + (noData === 1 ? '' : 's') + ' had no DAT data';
+    showToast(msg);
+  };
+
+  // Prefer readText, fall back to prompt
+  var fallback = function() {
+    var raw = prompt('Paste the DAT rate payload here (Ctrl+V):');
+    if (raw) ingest(raw);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.readText) {
+    navigator.clipboard.readText().then(ingest, fallback);
+  } else {
+    fallback();
+  }
+}
+
+// ── Step 3: Copy rate map for Salesforce bookmarklet ──
+function bulkCopyToSalesforce() {
+  if (_bulkRows.length === 0) { showToast('⚠ No rates to copy'); return; }
+  var rates = {};
+  _bulkRows.forEach(function(r) {
+    if (r.suggestedRate && r.suggestedRate > 0) {
+      rates[r.loadId] = Math.round(r.suggestedRate);
+    }
+  });
+  if (!Object.keys(rates).length) { showToast('⚠ No non-zero rates to send'); return; }
+  var payload = JSON.stringify({ type: 'sf-fill', rates: rates, fieldLabel: 'Posted Amount', loadField: 'Load #' });
+
+  var doCopy = function() {
+    showToast('💰 ' + Object.keys(rates).length + ' rates copied — switch to Salesforce list view and run the 🔄 Mass Post Helper bookmarklet');
+  };
+  try {
+    navigator.clipboard.writeText(payload).then(doCopy, function() {
+      var ta = document.createElement('textarea');
+      ta.value = payload;
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      doCopy();
+    });
+  } catch (e) {
+    var ta = document.createElement('textarea');
+    ta.value = payload;
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    doCopy();
+  }
+}
+
+function generateBulkCSV() {
+  // Use the reviewed _bulkRows (with user-edited rates) rather than re-querying allLoads.
+  // This way the rates that went through the preview/adjustment flow are the ones that get exported.
+  if (!_bulkRows || _bulkRows.length === 0) {
+    showToast('⚠ No loads to export. Click "Load Lanes" first.');
     return;
   }
 
@@ -5923,30 +6762,27 @@ function generateBulkCSV() {
   ];
 
   var csvRows = [];
-  var seenLanes = {};
+  var seenLaneDates = {};
   var bulkExportedIds = [];
 
-  filtered.forEach(function(load) {
+  _bulkRows.forEach(function(r) {
+    var load = r.load;
     var orig = splitCityState(getMapped(load, 'origin'));
     var dest = splitCityState(getMapped(load, 'destination'));
     var equip = formatEquipment(getMapped(load, 'equipType'));
     var pickupDate = getMapped(load, 'pickupDate') || '';
 
-    // One posting per lane: origin+dest+equip+date
-    var laneKey = (orig.city + orig.state + dest.city + dest.state + equip + pickupDate).toLowerCase().replace(/\s/g, '');
-    if (seenLanes[laneKey]) {
-      // Still mark dupe load IDs as posted (since they cover the same lane)
-      var dupId = getMapped(load, 'referenceId');
-      if (dupId) bulkExportedIds.push(dupId);
+    // One posting per lane+equip+date combo
+    var laneDateKey = (orig.city + orig.state + dest.city + dest.state + equip + pickupDate).toLowerCase().replace(/\s/g, '');
+    if (seenLaneDates[laneDateKey]) {
+      if (r.loadId) bulkExportedIds.push(r.loadId);
       return;
     }
-    seenLanes[laneKey] = true;
-    var loadId = getMapped(load, 'referenceId');
-    if (loadId) bulkExportedIds.push(loadId);
+    seenLaneDates[laneDateKey] = true;
+    if (r.loadId) bulkExportedIds.push(r.loadId);
 
-    var customer = getMapped(load, 'customer') || '';
-    var comm = lookupCommodity(customer) || getMapped(load, 'commodity') || '';
-    var rate = (getMapped(load, 'rate') || '').replace(/[\$,]/g, '');
+    // Use the reviewed rate from the preview table
+    var rate = String(Math.round(r.suggestedRate || 0));
 
     var rawWeight = parseFloat((getMapped(load, 'weight') || '0').replace(/[^0-9.]/g, '')) || 0;
     var clampedWeight = Math.max(10000, Math.min(40000, rawWeight));
@@ -5963,7 +6799,7 @@ function generateBulkCSV() {
       'no',                                // Allow Private Network Booking
       'no',                                // Allow Private Network Bidding
       'yes',                               // Use DAT Loadboard*
-      rate,                                // DAT Loadboard Rate
+      rate,                                // DAT Loadboard Rate (reviewed rate)
       'no',                                // Allow DAT Loadboard Booking
       'yes',                               // Use Extended Network
       'primary phone',                     // Contact Method*
@@ -5979,32 +6815,16 @@ function generateBulkCSV() {
     ]);
   });
 
-  // Show preview table (short headers for display)
-  var shortHeaders = ['PU Date','PU Latest','Len','Wt','F/P','Equip','PN','PN Rate','PN Book','PN Bid',
-    'LB','LB Rate','LB Book','Ext Net','Contact','O.City','O.ST','O.ZIP','D.City','D.ST','D.ZIP',
-    'Comment','Commodity','Ref ID'];
-  var tableEl = document.getElementById('bulk-table');
-  var html = '<thead><tr>';
-  shortHeaders.forEach(function(h) { html += '<th>' + esc(h) + '</th>'; });
-  html += '</tr></thead><tbody>';
-  csvRows.forEach(function(row) {
-    html += '<tr>';
-    row.forEach(function(cell) { html += '<td>' + esc(cell) + '</td>'; });
-    html += '</tr>';
-  });
-  html += '</tbody>';
-  tableEl.innerHTML = html;
-  document.getElementById('bulk-table-wrap').style.display = 'block';
-  var dupeCount = filtered.length - csvRows.length;
-  var dupeMsg = dupeCount > 0 ? ' (' + dupeCount + ' duplicate lane' + (dupeCount > 1 ? 's' : '') + ' removed)' : '';
-  var bookedMsg = skippedBooked > 0 ? ' · ' + skippedBooked + ' booked load' + (skippedBooked > 1 ? 's' : '') + ' skipped' : '';
-  document.getElementById('bulk-preview').innerHTML = '<strong>' + csvRows.length + ' unique lanes</strong>' + dupeMsg + bookedMsg + ' ready for export. '
-    + '<button class="btn btn-primary btn-sm" onclick="downloadBulkCSV()" style="margin-left:8px;">⬇ Download CSV</button>';
+  if (csvRows.length === 0) {
+    showToast('⚠ Nothing to export — all loads deduped away');
+    return;
+  }
 
-  // Store for download
+  // Store for download, then download immediately
   window._bulkCSVRows = csvRows;
   window._bulkExportedIds = bulkExportedIds;
   window._bulkCSVHeaders = csvHeaders;
+  downloadBulkCSV();
 }
 
 function downloadBulkCSV() {
@@ -6072,6 +6892,258 @@ function buildBookmarklet() {
   _bookmarkletCode = "javascript:void(function(){var t=prompt('Mass Post — paste load data (Ctrl+V):');if(!t)return;try{var d=JSON.parse(t);if(d.rate)d.rate=d.rate.replace(/[\\$,]/g,'');var f=0;var ns=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;var nst=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set;function sv(el,v){if(el.tagName==='TEXTAREA'){nst.call(el,v);}else{ns.call(el,v);}el.dispatchEvent(new Event('focus',{bubbles:true}));el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));el.dispatchEvent(new KeyboardEvent('keydown',{bubbles:true,key:'a'}));el.dispatchEvent(new KeyboardEvent('keyup',{bubbles:true,key:'a'}));el.dispatchEvent(new Event('blur',{bubbles:true}));f++;}function sid(id,v){if(!v)return;var el=document.getElementById(id);if(el)sv(el,v);}function slab(txt,v){if(!v)return;var labs=document.querySelectorAll('mat-label,label');for(var i=0;i<labs.length;i++){if(labs[i].textContent.toLowerCase().indexOf(txt.toLowerCase())!==-1){var p=labs[i].closest('mat-form-field')||labs[i].parentElement;if(!p)continue;var inp=p.querySelector('input:not([type=hidden]),textarea');if(inp){sv(inp,v);return;}}}}function cklab(txt,want){var els=document.querySelectorAll('mat-checkbox,label');for(var i=0;i<els.length;i++){if(els[i].textContent.toLowerCase().indexOf(txt.toLowerCase())!==-1){var cb=els[i].querySelector('input[type=checkbox]')||els[i];if(cb.type==='checkbox'&&cb.checked!==want){cb.click();f++;}return;}}}slab('Origin',d.origin);slab('Destination',d.destination);sid('shipment-pickup-earliest',d.pickupDate);sid('shipment-pickup-latest',d.pickupLatest);sid('shipment-equipment-type',d.equipType);sid('shipment-length',d.length);sid('shipment-weight',d.weight);sid('shipment-reference-id',d.referenceId);sid('shipment-comments',d.comments);slab('Rate',d.rate);var toTeam=!!d.postToTeam;cklab('Phone',toTeam);cklab('Email',!toTeam);alert('Filled '+f+' field(s)!');}catch(e){alert('Error: '+e.message);}}())";
 
   document.getElementById('bookmarklet-anchor').href = _bookmarkletCode;
+  buildHelperBookmarklet();
+}
+
+function buildHelperBookmarklet() {
+  // Context-aware bookmarklet. Runs on either DAT Tools OR Salesforce.
+  // Reads clipboard payload, detects type, routes to the right handler.
+  //
+  // Payload formats:
+  //   { type:'dat-lookup', lanes:[{id,origin,destination,equipment}] }
+  //   { type:'sf-fill', rates:{loadNumber:rate}, fieldLabel:'Posted Amount' }
+  var code = "javascript:void(function(){"
+    + "var t=prompt('Mass Post Helper \u2014 paste payload (Ctrl+V):');if(!t)return;"
+    + "var p;try{p=JSON.parse(t);}catch(e){alert('Not valid JSON. Copy the payload from Mass Post first.');return;}"
+    + "if(!p||!p.type){alert('Missing payload type.');return;}"
+    + "var host=location.hostname;"
+    // ── DAT RATE LOOKUP ──
+    + "if(p.type==='dat-lookup'){"
+      + "if(host.indexOf('dat.com')===-1){alert('Switch to one.dat.com/tools before running this.');return;}"
+      + "if(!p.lanes||!p.lanes.length){alert('No lanes to look up.');return;}"
+      // Sort by equipment so we don't flip the dropdown unnecessarily
+      + "p.lanes.sort(function(a,b){return (a.equipment||'').localeCompare(b.equipment||'');});"
+      + "var res={},total=p.lanes.length;"
+      + "var ns=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+      + "function typeIn(el,v){if(!el)return;ns.call(el,v);el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}"
+      + "function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}"
+      + "function byText(sel,txt){var els=document.querySelectorAll(sel);var low=txt.toLowerCase();for(var i=0;i<els.length;i++){if(els[i].textContent.trim().toLowerCase()===low&&els[i].offsetParent!==null)return els[i];}return null;}"
+      + "function findInput(label){"
+        + "var labs=document.querySelectorAll('mat-label,label');"
+        + "for(var j=0;j<labs.length;j++){"
+          + "if(labs[j].textContent.toLowerCase().indexOf(label.toLowerCase())===-1)continue;"
+          + "var ff=labs[j].closest('mat-form-field');if(!ff)continue;"
+          + "var inp=ff.querySelector('input');if(inp)return inp;"
+        + "}return null;"
+      + "}"
+      + "function pickAutocomplete(){"
+        // DAT uses Google Places Autocomplete (.pac-item)
+        + "return new Promise(function(r){"
+          + "var tries=0;function check(){"
+            + "var pac=document.querySelector('.pac-container:not([style*=\"display: none\"]) .pac-item');"
+            + "if(pac){"
+              + "var ev=new MouseEvent('mousedown',{bubbles:true,cancelable:true,view:window});pac.dispatchEvent(ev);"
+              + "setTimeout(function(){r(true);},200);return;"
+            + "}"
+            + "var opt=document.querySelector('mat-option:not([aria-disabled=\"true\"])');"
+            + "if(opt){opt.click();setTimeout(function(){r(true);},200);return;}"
+            + "if(++tries>25){r(false);return;}"
+            + "setTimeout(check,150);"
+          + "}check();"
+        + "});"
+      + "}"
+      + "function pickEquip(wantEq){"
+        + "return new Promise(function(r){"
+          + "var sel=document.querySelector('mat-select');"
+          + "if(!sel){r(false);return;}"
+          + "sel.click();"
+          + "setTimeout(function(){"
+            + "var opts=document.querySelectorAll('mat-option');"
+            + "for(var k=0;k<opts.length;k++){"
+              + "if(opts[k].textContent.trim().toLowerCase()===wantEq.toLowerCase()){opts[k].click();setTimeout(function(){r(true);},250);return;}"
+            + "}"
+            + "document.body.click();r(false);"
+          + "},350);"
+        + "});"
+      + "}"
+      + "function clickSearch(){"
+        // Find the SEARCH button by class + text
+        + "var btns=document.querySelectorAll('.action-button,button');"
+        + "for(var i=0;i<btns.length;i++){"
+          + "var txt=btns[i].textContent.trim().toUpperCase();"
+          + "if(txt==='SEARCH'&&btns[i].offsetParent!==null){btns[i].click();return true;}"
+        + "}return false;"
+      + "}"
+      + "function clickNewSearch(){"
+        + "var btns=document.querySelectorAll('.action-button,button,a');"
+        + "for(var i=0;i<btns.length;i++){"
+          + "var txt=btns[i].textContent.trim().toUpperCase();"
+          + "if(txt==='NEW SEARCH'&&btns[i].offsetParent!==null){btns[i].click();return true;}"
+        + "}return false;"
+      + "}"
+      + "function waitForResult(maxMs){"
+        + "return new Promise(function(r){"
+          + "var start=Date.now();function check(){"
+            + "var cells=document.querySelectorAll('.rate-data');"
+            + "if(cells.length>=1&&/\\d/.test(cells[0].textContent)){r(true);return;}"
+            + "if(Date.now()-start>maxMs){r(false);return;}"
+            + "setTimeout(check,150);"
+          + "}check();"
+        + "});"
+      + "}"
+      + "function readResult(){"
+        + "var out={spot:null,spotLow:null,spotHigh:null,spotPerMi:null,contract:null,contractLow:null,contractHigh:null,miles:null,nodata:false};"
+        + "var cells=document.querySelectorAll('.rate-data');"
+        // Also capture anything near the rate that says 'not enough data'
+        + "var body=document.body.innerText;"
+        + "if(cells.length===0){"
+          + "if(/not\\s+enough\\s+data|no\\s+data|insufficient/i.test(body)){out.nodata=true;}"
+          + "return out;"
+        + "}"
+        // First rate-data is Spot, second is Contract (based on page structure you provided)
+        + "function parseNum(s){return parseInt(String(s).replace(/[^0-9]/g,''),10)||null;}"
+        + "if(cells[0])out.spot=parseNum(cells[0].textContent);"
+        + "if(cells[1])out.contract=parseNum(cells[1].textContent);"
+        // Per-mile & miles from surrounding body text; Range for spot + contract
+        + "var spotSec=body.match(/SPOT[\\s\\S]{0,400}?(?=CONTRACT|NEW SEARCH|$)/i);"
+        + "var contractSec=body.match(/CONTRACT[\\s\\S]{0,400}?(?=NEW SEARCH|HELP CENTER|$)/i);"
+        + "if(spotSec){"
+          + "var s=spotSec[0];"
+          + "var pmM=s.match(/\\(\\$([\\d.]+)\\/mi\\)/);if(pmM)out.spotPerMi=parseFloat(pmM[1]);"
+          + "var mi=s.match(/(\\d[\\d,]*)\\s*mi\\s*\\|/i);if(mi)out.miles=parseInt(mi[1].replace(/,/g,''),10);"
+          + "var r=s.match(/Range[:\\s]+\\$([\\d,]+)\\s*[-\\u2013]\\s*\\$([\\d,]+)/i);"
+          + "if(r){out.spotLow=parseInt(r[1].replace(/,/g,''),10);out.spotHigh=parseInt(r[2].replace(/,/g,''),10);}"
+        + "}"
+        + "if(contractSec){"
+          + "var c=contractSec[0];"
+          + "var r2=c.match(/Range[:\\s]+\\$([\\d,]+)\\s*[-\\u2013]\\s*\\$([\\d,]+)/i);"
+          + "if(r2){out.contractLow=parseInt(r2[1].replace(/,/g,''),10);out.contractHigh=parseInt(r2[2].replace(/,/g,''),10);}"
+        + "}"
+        + "if(!out.spot&&!out.contract){"
+          + "if(/not\\s+enough\\s+data|no\\s+data|insufficient/i.test(body))out.nodata=true;"
+        + "}"
+        + "return out;"
+      + "}"
+      + "var prog=document.createElement('div');"
+      + "prog.style.cssText='position:fixed;top:20px;right:20px;z-index:99999;background:#1A1F33;color:#fff;padding:14px 20px;border-radius:10px;font-family:sans-serif;font-size:13px;border:2px solid #A78BFA;box-shadow:0 10px 30px rgba(0,0,0,0.5);min-width:280px;';"
+      + "prog.innerHTML='<div style=\"font-weight:700;margin-bottom:6px;color:#A78BFA;\">\ud83d\udd04 Mass Post Helper</div><div id=\"mph-stat\">Starting...</div>';"
+      + "document.body.appendChild(prog);"
+      + "function stat(s){document.getElementById('mph-stat').textContent=s;}"
+      + "(async function(){"
+        + "for(var i=0;i<total;i++){"
+          + "var L=p.lanes[i];"
+          + "stat('Lane '+(i+1)+' of '+total+': '+L.origin+' \u2192 '+L.destination);"
+          + "try{"
+            // Reset form first (clicks NEW SEARCH if present, else skips)
+            + "clickNewSearch();await sleep(400);"
+            // Origin
+            + "var oIn=findInput('Origin');if(!oIn){res[L.id]={error:'no origin field'};continue;}"
+            + "oIn.focus();typeIn(oIn,L.origin);await sleep(500);"
+            + "var oOk=await pickAutocomplete();"
+            + "if(!oOk){res[L.id]={error:'origin autocomplete failed: '+L.origin};continue;}"
+            + "await sleep(250);"
+            // Destination
+            + "var dIn=findInput('Destination');if(!dIn){res[L.id]={error:'no destination field'};continue;}"
+            + "dIn.focus();typeIn(dIn,L.destination);await sleep(500);"
+            + "var dOk=await pickAutocomplete();"
+            + "if(!dOk){res[L.id]={error:'destination autocomplete failed: '+L.destination};continue;}"
+            + "await sleep(250);"
+            // Equipment
+            + "await pickEquip(L.equipment);await sleep(300);"
+            // Click SEARCH
+            + "var searched=clickSearch();"
+            + "if(!searched){res[L.id]={error:'search button not found'};continue;}"
+            // Wait for result
+            + "var gotResult=await waitForResult(6000);"
+            + "if(!gotResult){res[L.id]={nodata:true};continue;}"
+            + "await sleep(300);"
+            + "var r=readResult();res[L.id]=r;"
+          + "}catch(err){res[L.id]={error:String(err)};}"
+        + "}"
+        + "stat('Done! Preparing results...');"
+        + "var payload=JSON.stringify({type:'dat-rates',rates:res});"
+        // Clipboard API requires a user gesture. The bookmarklet has been running async
+        // for 60-90s so the initial click gesture is long gone. Replace the progress card
+        // with a big Copy button that uses the fresh user click to write to clipboard.
+        + "prog.innerHTML='<div style=\"font-weight:700;margin-bottom:10px;color:#A78BFA;font-size:14px;\">\u2713 Lookup complete</div>"
+          + "<div style=\"font-size:12px;margin-bottom:12px;\">Got '+Object.keys(res).length+' lane result'+(Object.keys(res).length===1?'':'s')+'.<br>Click the button to copy to clipboard.</div>"
+          + "<button id=\"mph-copy-btn\" style=\"background:linear-gradient(135deg,#A78BFA,#7C3AED);border:none;color:#fff;font-size:14px;font-weight:800;padding:10px 20px;border-radius:8px;cursor:pointer;width:100%;margin-bottom:6px;\">\ud83d\udccb Copy Rates</button>"
+          + "<div id=\"mph-copy-done\" style=\"font-size:11px;color:#22C55E;text-align:center;min-height:16px;\"></div>';"
+        + "var copyBtn=document.getElementById('mph-copy-btn');"
+        + "var copyDone=document.getElementById('mph-copy-done');"
+        + "copyBtn.addEventListener('click',function(){"
+          + "function fin(ok){"
+            + "if(ok){"
+              + "copyDone.textContent='\u2713 Copied! Switch to Mass Post and click Paste Rates.';"
+              + "copyBtn.style.opacity='0.5';copyBtn.disabled=true;"
+              + "setTimeout(function(){if(prog.parentNode)prog.parentNode.removeChild(prog);},4000);"
+            + "}else{"
+              + "copyDone.textContent='\u26a0 Copy failed \u2014 prompt will show.';"
+              + "prompt('Copy this payload (Ctrl+C):',payload);"
+              + "setTimeout(function(){if(prog.parentNode)prog.parentNode.removeChild(prog);},2000);"
+            + "}"
+          + "}"
+          + "if(navigator.clipboard&&navigator.clipboard.writeText){"
+            + "navigator.clipboard.writeText(payload).then(function(){fin(true);},function(){"
+              // Try legacy fallback
+              + "var ta=document.createElement('textarea');ta.value=payload;ta.style.cssText='position:fixed;top:0;left:0;opacity:0';"
+              + "document.body.appendChild(ta);ta.select();"
+              + "var ok=false;try{ok=document.execCommand('copy');}catch(e){}"
+              + "document.body.removeChild(ta);fin(ok);"
+            + "});"
+          + "}else{"
+            + "var ta=document.createElement('textarea');ta.value=payload;ta.style.cssText='position:fixed;top:0;left:0;opacity:0';"
+            + "document.body.appendChild(ta);ta.select();"
+            + "var ok=false;try{ok=document.execCommand('copy');}catch(e){}"
+            + "document.body.removeChild(ta);fin(ok);"
+          + "}"
+        + "});"
+      + "})();"
+      + "return;"
+    + "}"
+    // ── SALESFORCE FILL RATES ──
+    + "if(p.type==='sf-fill'){"
+      + "if(host.indexOf('salesforce.com')===-1&&host.indexOf('force.com')===-1){alert('Switch to your Salesforce list view before running this.');return;}"
+      + "if(!p.rates||!Object.keys(p.rates).length){alert('No rates to fill.');return;}"
+      + "var rows=document.querySelectorAll('table tbody tr, [role=row]');"
+      + "if(!rows.length){alert('No table rows found. Make sure you are on a list view.');return;}"
+      + "var hdrs=document.querySelectorAll('table thead th, [role=columnheader]');"
+      + "var loadCol=-1,rateCol=-1;"
+      + "for(var h=0;h<hdrs.length;h++){"
+        + "var ht=hdrs[h].textContent.trim().toLowerCase();"
+        + "if(ht.indexOf('load')!==-1&&loadCol===-1)loadCol=h;"
+        + "if(ht.indexOf('posted')!==-1&&ht.indexOf('amount')!==-1)rateCol=h;"
+      + "}"
+      + "if(loadCol===-1||rateCol===-1){alert('Could not find Load or Posted Amount columns.');return;}"
+      + "var ns2=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+      + "var filled=0,missing=[];"
+      + "function typeIn2(el,v){ns2.call(el,v);el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}"
+      + "function sleep2(ms){return new Promise(function(r){setTimeout(r,ms);});}"
+      + "(async function(){"
+        + "for(var ri=0;ri<rows.length;ri++){"
+          + "var cells=rows[ri].querySelectorAll('td,[role=gridcell]');"
+          + "if(cells.length<=Math.max(loadCol,rateCol))continue;"
+          + "var ln=cells[loadCol].textContent.trim().replace(/\\D/g,'').replace(/^0+/,'');"
+          + "if(!ln)continue;"
+          + "var wanted=null;"
+          + "for(var k in p.rates){var kk=String(k).replace(/\\D/g,'').replace(/^0+/,'');if(kk===ln){wanted=p.rates[k];break;}}"
+          + "if(wanted===null)continue;"
+          + "var cell=cells[rateCol];"
+          + "var editBtn=cell.querySelector('button[title*=\"Edit\"],button[title*=\"edit\"]')||cell.querySelector('.slds-button_icon,[class*=\"edit\"]');"
+          + "if(editBtn){editBtn.click();await sleep2(200);}else{"
+            + "var ev=new MouseEvent('dblclick',{bubbles:true,cancelable:true,view:window});cell.dispatchEvent(ev);await sleep2(200);"
+          + "}"
+          + "var inp=cell.querySelector('input')||document.querySelector('.inlineEditLayer input,.uiInput--input input,.forceInputInlineEdit input');"
+          + "if(!inp){missing.push(ln);continue;}"
+          + "typeIn2(inp,String(wanted));await sleep2(120);"
+          + "inp.dispatchEvent(new KeyboardEvent('keydown',{bubbles:true,key:'Tab',keyCode:9}));"
+          + "inp.blur();await sleep2(180);"
+          + "filled++;"
+        + "}"
+        + "var saveBtn=null;var btns=document.querySelectorAll('button');"
+        + "for(var b=0;b<btns.length;b++){if(btns[b].textContent.trim().toLowerCase()==='save'){saveBtn=btns[b];break;}}"
+        + "var msg='Filled '+filled+' rate'+(filled===1?'':'s')+'. ';"
+        + "if(missing.length)msg+=missing.length+' row'+(missing.length===1?'':'s')+' could not be updated. ';"
+        + "if(saveBtn){msg+='Click Save in Salesforce to commit.';setTimeout(function(){saveBtn.focus();saveBtn.style.outline='3px solid #A78BFA';saveBtn.style.outlineOffset='2px';},200);}"
+        + "else{msg+='Look for the Save button at the bottom of the list.';}"
+        + "alert(msg);"
+      + "})();"
+      + "return;"
+    + "}"
+    + "alert('Unknown payload type: '+p.type);"
+    + "}())";
+  var anchor = document.getElementById('helper-bookmarklet-anchor');
+  if (anchor) anchor.href = code;
 }
 
 // ══════════════════════════════════════════════
