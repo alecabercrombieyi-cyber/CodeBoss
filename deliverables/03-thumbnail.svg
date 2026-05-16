@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <defs>
+    <!-- Deep navy "bolt" background -->
+    <radialGradient id="bg" cx="35%" cy="40%" r="80%">
+      <stop offset="0%" stop-color="#142046"/>
+      <stop offset="55%" stop-color="#0A0E1A"/>
+      <stop offset="100%" stop-color="#05070F"/>
+    </radialGradient>
+    <!-- Candy cream rim (Suite brand stamp at bottom) -->
+    <linearGradient id="cream" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fdfaf4"/>
+      <stop offset="100%" stop-color="#f5efe6"/>
+    </linearGradient>
+    <!-- Lightning bolt fill: Bolt Post's signature electric blue → purple -->
+    <linearGradient id="boltFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6EA8FF"/>
+      <stop offset="60%" stop-color="#4D8DFF"/>
+      <stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+    <!-- Pink candy accent (Suite tagline ribbon) -->
+    <linearGradient id="pink" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e599ad"/>
+      <stop offset="50%" stop-color="#d4738c"/>
+      <stop offset="100%" stop-color="#b85775"/>
+    </linearGradient>
+    <!-- Gold underline -->
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e6c89a"/>
+      <stop offset="100%" stop-color="#c8a062"/>
+    </linearGradient>
+    <!-- Glow filter for the bolt -->
+    <filter id="boltGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Subtle inner shadow for text -->
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feOffset in="b" dx="0" dy="2"/>
+      <feComposite in="SourceGraphic" in2="b"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="720" fill="url(#bg)"/>
+
+  <!-- Faint diagonal streaks for energy -->
+  <g opacity="0.07" stroke="#6EA8FF" stroke-width="2" fill="none">
+    <line x1="-100" y1="100" x2="600" y2="-200"/>
+    <line x1="-100" y1="300" x2="800" y2="-100"/>
+    <line x1="900" y1="900" x2="1500" y2="500"/>
+    <line x1="700" y1="900" x2="1400" y2="300"/>
+  </g>
+
+  <!-- Big lightning bolt — centered right -->
+  <g transform="translate(880, 360)" filter="url(#boltGlow)">
+    <!-- Halo -->
+    <ellipse cx="0" cy="0" rx="220" ry="280" fill="#4D8DFF" opacity="0.18"/>
+    <ellipse cx="0" cy="0" rx="140" ry="200" fill="#A78BFA" opacity="0.20"/>
+    <!-- The bolt shape (classic 7-point) -->
+    <path d="M 60 -260 L -80 30 L 10 30 L -60 260 L 110 -10 L 20 -10 L 90 -260 Z"
+          fill="url(#boltFill)"
+          stroke="#E8EDFB"
+          stroke-width="4"
+          stroke-linejoin="round"/>
+    <!-- Inner highlight -->
+    <path d="M 50 -240 L -50 20 L -10 20 L -40 220 L 90 0 L 30 0 L 80 -240 Z"
+          fill="none"
+          stroke="#ffffff"
+          stroke-opacity="0.35"
+          stroke-width="2"
+          stroke-linejoin="round"/>
+  </g>
+
+  <!-- LEFT-SIDE STACK: title block -->
+  <g transform="translate(72, 130)">
+    <!-- Tiny kicker -->
+    <text x="0" y="0"
+          font-family="JetBrains Mono, ui-monospace, monospace"
+          font-size="22"
+          font-weight="500"
+          letter-spacing="6"
+          fill="#A78BFA">LOGISTICS SUITE · 02 / 07</text>
+
+    <!-- Main wordmark BOLT POST -->
+    <text x="0" y="120"
+          font-family="DM Sans, Outfit, sans-serif"
+          font-size="160"
+          font-weight="900"
+          letter-spacing="-6"
+          fill="#E8EDFB">BOLT</text>
+    <text x="0" y="270"
+          font-family="DM Sans, Outfit, sans-serif"
+          font-size="160"
+          font-weight="900"
+          letter-spacing="-6"
+          fill="url(#boltFill)">POST</text>
+
+    <!-- Gold underline -->
+    <rect x="0" y="290" width="380" height="6" rx="3" fill="url(#gold)"/>
+
+    <!-- Subhead -->
+    <text x="0" y="350"
+          font-family="DM Sans, Outfit, sans-serif"
+          font-size="38"
+          font-weight="700"
+          fill="#E8EDFB">Post a load in</text>
+    <text x="0" y="400"
+          font-family="DM Sans, Outfit, sans-serif"
+          font-size="56"
+          font-weight="900"
+          fill="#6EA8FF">5 seconds.</text>
+
+    <!-- Body line -->
+    <text x="0" y="470"
+          font-family="DM Sans, Outfit, sans-serif"
+          font-size="26"
+          font-weight="500"
+          fill="#7B8DB8">Salesforce → DAT. One click, one paste.</text>
+  </g>
+
+  <!-- BOTTOM CANDY RIBBON (Suite brand stamp) -->
+  <g transform="translate(0, 650)">
+    <rect x="0" y="0" width="1280" height="70" fill="url(#cream)"/>
+    <!-- Top edge gradient hairline (pink → purple) -->
+    <rect x="0" y="0" width="1280" height="2" fill="url(#pink)" opacity="0.7"/>
+    <!-- Logo dot -->
+    <circle cx="48" cy="35" r="18" fill="#d4738c"/>
+    <path d="M48 24 c5 0 8 3 8 8 0 4-2 7-5 7.5h-6 C42 39 40 36 40 32 c0-5 3-8 8-8z" fill="#fff"/>
+    <rect x="47" y="40" width="2" height="6" rx="1" fill="#fff" opacity="0.85"/>
+    <!-- Brand line -->
+    <text x="86" y="42"
+          font-family="DM Sans, sans-serif"
+          font-size="20"
+          font-weight="700"
+          fill="#2c2823">Logistics Suite</text>
+    <text x="86" y="60"
+          font-family="JetBrains Mono, monospace"
+          font-size="11"
+          letter-spacing="2"
+          fill="#8a857e">BUILT BY BROKERS · FOR BROKERS</text>
+    <!-- Right-side tag chip -->
+    <g transform="translate(1075, 18)">
+      <rect x="0" y="0" width="180" height="34" rx="17" fill="#d4738c"/>
+      <text x="90" y="22"
+            font-family="DM Sans, sans-serif"
+            font-size="14"
+            font-weight="700"
+            text-anchor="middle"
+            fill="#ffffff">SPEED COMPANION</text>
+    </g>
+  </g>
+
+  <!-- TOP-RIGHT BADGE: tutorial number -->
+  <g transform="translate(1140, 80)">
+    <rect x="-60" y="-30" width="120" height="60" rx="14"
+          fill="#A78BFA" opacity="0.18" stroke="#A78BFA" stroke-width="2"/>
+    <text x="0" y="8"
+          font-family="JetBrains Mono, monospace"
+          font-size="26"
+          font-weight="700"
+          text-anchor="middle"
+          fill="#A78BFA">EP·02</text>
+  </g>
+</svg>
