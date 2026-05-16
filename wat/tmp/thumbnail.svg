@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#faf7f2"/>
+      <stop offset="100%" stop-color="#f3ebe0"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff4d4d"/>
+      <stop offset="50%" stop-color="#ff6b35"/>
+      <stop offset="100%" stop-color="#ffb347"/>
+    </linearGradient>
+    <linearGradient id="candy" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d4738c"/>
+      <stop offset="100%" stop-color="#b85775"/>
+    </linearGradient>
+    <radialGradient id="firePin" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#ff4d4d" stop-opacity="0.95"/>
+      <stop offset="60%" stop-color="#ff6b35" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#ff6b35" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="truckGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#4da6ff" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#4da6ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="loadGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#00d4aa" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#00d4aa" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dx="0" dy="4"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Cream background -->
+  <rect width="1280" height="720" fill="url(#bg)"/>
+
+  <!-- subtle candy diagonal accent strip -->
+  <polygon points="0,720 0,560 380,720" fill="url(#candy)" opacity="0.08"/>
+  <polygon points="1280,0 1280,180 950,0" fill="url(#candy)" opacity="0.08"/>
+
+  <!-- LEFT BLOCK: the dark map "screen" -->
+  <g transform="translate(50,90)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="660" height="540" rx="28" fill="#0d0d0d"/>
+    <rect x="0" y="0" width="660" height="540" rx="28" fill="none" stroke="#252525" stroke-width="2"/>
+
+    <!-- abstract US outline (simplified blob) -->
+    <path d="M 60 220
+             C 60 160, 120 130, 200 130
+             L 540 130
+             C 600 130, 620 160, 620 200
+             L 620 280
+             C 620 320, 600 350, 560 360
+             L 480 380
+             L 460 430
+             L 380 440
+             L 280 430
+             L 200 410
+             L 130 380
+             C 90 360, 60 320, 60 280 Z"
+          fill="#1a1a1a" stroke="#333" stroke-width="1.5"/>
+
+    <!-- lane lines (dashed cyan) -->
+    <line x1="180" y1="320" x2="430" y2="200" stroke="#00bcd4" stroke-width="2.5" stroke-dasharray="8 6" opacity="0.55"/>
+    <line x1="180" y1="320" x2="520" y2="280" stroke="#00bcd4" stroke-width="2.5" stroke-dasharray="8 6" opacity="0.4"/>
+
+    <!-- match line (solid green) -->
+    <line x1="180" y1="320" x2="430" y2="200" stroke="#00d4aa" stroke-width="3.5" opacity="0.85"/>
+
+    <!-- TRUCK pin (left) -->
+    <circle cx="180" cy="320" r="46" fill="url(#truckGlow)"/>
+    <circle cx="180" cy="320" r="22" fill="#1a1a1a" stroke="#4da6ff" stroke-width="2.5"/>
+    <text x="180" y="332" font-family="Outfit, sans-serif" font-size="26" text-anchor="middle">🚛</text>
+
+    <!-- LOAD pin (right) -->
+    <circle cx="430" cy="200" r="40" fill="url(#loadGlow)"/>
+    <circle cx="430" cy="200" r="18" fill="#1a1a1a" stroke="#00d4aa" stroke-width="2.5"/>
+    <text x="430" y="211" font-family="Outfit, sans-serif" font-size="22" text-anchor="middle">📦</text>
+
+    <!-- FIRE hotspot at match -->
+    <circle cx="430" cy="200" r="70" fill="url(#firePin)"/>
+    <text x="430" y="172" font-family="Outfit, sans-serif" font-size="50" text-anchor="middle">🔥</text>
+
+    <!-- small secondary fires -->
+    <circle cx="520" cy="280" r="38" fill="url(#firePin)" opacity="0.7"/>
+    <text x="520" y="290" font-family="Outfit, sans-serif" font-size="24" text-anchor="middle">🔥</text>
+
+    <!-- legend chip top-left of map -->
+    <rect x="22" y="22" width="170" height="32" rx="16" fill="#1a1a1a" stroke="#333" stroke-width="1"/>
+    <text x="38" y="43" font-family="Outfit, sans-serif" font-size="13" font-weight="700" fill="#ff6b35" letter-spacing="2">FREIGHT MATCHER</text>
+
+    <!-- "47 → 1 minute" tag bottom-right of map -->
+    <rect x="430" y="470" width="210" height="50" rx="14" fill="#00d4aa"/>
+    <text x="535" y="503" font-family="Outfit, sans-serif" font-size="22" font-weight="800" text-anchor="middle" fill="#0d0d0d">47 EMAILS → 1 MIN</text>
+  </g>
+
+  <!-- RIGHT BLOCK: text -->
+  <g transform="translate(760,120)">
+    <!-- eyebrow -->
+    <text x="0" y="0" font-family="JetBrains Mono, monospace" font-size="18" font-weight="600" fill="#b85775" letter-spacing="3">LOGISTICS SUITE · APP 04</text>
+
+    <!-- title -->
+    <text x="0" y="78" font-family="Outfit, sans-serif" font-size="78" font-weight="900" fill="#0d0d0d" letter-spacing="-1">PASTE</text>
+    <text x="0" y="160" font-family="Outfit, sans-serif" font-size="78" font-weight="900" fill="#0d0d0d" letter-spacing="-1">EMAILS.</text>
+    <text x="0" y="242" font-family="Outfit, sans-serif" font-size="78" font-weight="900" fill="url(#flame)" letter-spacing="-1">SEE FIRE.</text>
+
+    <!-- sub -->
+    <text x="0" y="298" font-family="DM Sans, sans-serif" font-size="22" font-weight="500" fill="#666">AI reads carrier emails.</text>
+    <text x="0" y="328" font-family="DM Sans, sans-serif" font-size="22" font-weight="500" fill="#666">Map lights up. Free.</text>
+
+    <!-- candy stamp / brand pip -->
+    <g transform="translate(0,380)">
+      <rect x="0" y="0" width="290" height="58" rx="14" fill="url(#candy)"/>
+      <text x="145" y="38" font-family="Outfit, sans-serif" font-size="22" font-weight="800" text-anchor="middle" fill="#faf7f2">THE SWEET SIDE OF FREIGHT</text>
+    </g>
+
+    <!-- tiny tag -->
+    <text x="0" y="478" font-family="JetBrains Mono, monospace" font-size="13" fill="#9b7bb8" letter-spacing="2">built by brokers · for brokers</text>
+  </g>
+
+  <!-- corner flame mark top-right -->
+  <g transform="translate(1170,40)">
+    <circle cx="40" cy="40" r="40" fill="url(#flame)" opacity="0.95"/>
+    <text x="40" y="58" font-family="Outfit, sans-serif" font-size="42" text-anchor="middle" fill="#faf7f2">🔥</text>
+  </g>
+</svg>
