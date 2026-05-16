@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <!-- Brand candy palette + Pillar's actual in-app gold (#b8974a) -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#faf7f2"/>
+      <stop offset="1" stop-color="#f3eadb"/>
+    </linearGradient>
+    <linearGradient id="pillarBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8d9b8"/>
+      <stop offset="1" stop-color="#b8974a"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#4a2a2a" flood-opacity="0.18"/>
+    </filter>
+    <filter id="textShadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#3a1f2a" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="720" fill="url(#bg)"/>
+
+  <!-- Soft mint diagonal stripe (suite signature) -->
+  <polygon points="0,560 1280,420 1280,720 0,720" fill="#7bc8b5" opacity="0.16"/>
+
+  <!-- Pillar 1 (left, standing) -->
+  <g filter="url(#shadow)">
+    <rect x="120" y="180" width="110" height="440" fill="url(#pillarBody)" rx="6"/>
+    <rect x="105" y="170" width="140" height="22" fill="#8a6e2a" rx="3"/>
+    <rect x="105" y="610" width="140" height="22" fill="#8a6e2a" rx="3"/>
+    <line x1="150" y1="200" x2="150" y2="600" stroke="#8a6e2a" stroke-width="2" opacity="0.5"/>
+    <line x1="175" y1="200" x2="175" y2="600" stroke="#8a6e2a" stroke-width="2" opacity="0.5"/>
+    <line x1="200" y1="200" x2="200" y2="600" stroke="#8a6e2a" stroke-width="2" opacity="0.5"/>
+  </g>
+
+  <!-- Pillar 2 (middle, CRACKED — the violation visual) -->
+  <g filter="url(#shadow)">
+    <rect x="280" y="180" width="110" height="440" fill="url(#pillarBody)" rx="6"/>
+    <rect x="265" y="170" width="140" height="22" fill="#8a6e2a" rx="3"/>
+    <rect x="265" y="610" width="140" height="22" fill="#8a6e2a" rx="3"/>
+    <line x1="310" y1="200" x2="310" y2="600" stroke="#8a6e2a" stroke-width="2" opacity="0.5"/>
+    <line x1="335" y1="200" x2="335" y2="600" stroke="#8a6e2a" stroke-width="2" opacity="0.5"/>
+    <line x1="360" y1="200" x2="360" y2="600" stroke="#8a6e2a" stroke-width="2" opacity="0.5"/>
+    <!-- The crack — diagonal red lightning -->
+    <path d="M 285 280 L 340 360 L 305 410 L 388 510" stroke="#b85775" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 285 280 L 340 360 L 305 410 L 388 510" stroke="#faf7f2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+  </g>
+
+  <!-- Pillar 3 (right, standing) -->
+  <g filter="url(#shadow)">
+    <rect x="440" y="180" width="110" height="440" fill="url(#pillarBody)" rx="6"/>
+    <rect x="425" y="170" width="140" height="22" fill="#8a6e2a" rx="3"/>
+    <rect x="425" y="610" width="140" height="22" fill="#8a6e2a" rx="3"/>
+    <line x1="470" y1="200" x2="470" y2="600" stroke="#8a6e2a" stroke-width="2" opacity="0.5"/>
+    <line x1="495" y1="200" x2="495" y2="600" stroke="#8a6e2a" stroke-width="2" opacity="0.5"/>
+    <line x1="520" y1="200" x2="520" y2="600" stroke="#8a6e2a" stroke-width="2" opacity="0.5"/>
+  </g>
+
+  <!-- Right-side text block -->
+  <g font-family="DM Sans, Inter, sans-serif" filter="url(#textShadow)">
+    <text x="620" y="200" font-family="JetBrains Mono, monospace" font-size="22" fill="#9b7bb8" font-weight="700" letter-spacing="3">APP 07 // PILLAR</text>
+
+    <text x="620" y="300" font-size="86" font-weight="900" fill="#3a1f2a">WHO POACHED</text>
+    <text x="620" y="382" font-size="86" font-weight="900" fill="#3a1f2a">YOUR <tspan fill="#b85775">CARRIER?</tspan></text>
+
+    <text x="620" y="450" font-size="34" font-weight="600" fill="#5a3a48">Core Carrier Intelligence</text>
+
+    <g transform="translate(620,490)">
+      <rect x="0" y="0" width="540" height="58" fill="#b85775" rx="29"/>
+      <text x="270" y="38" text-anchor="middle" font-size="26" font-weight="800" fill="#faf7f2" letter-spacing="2">12 VIOLATIONS · 4 SEVERE</text>
+    </g>
+
+    <text x="620" y="610" font-family="JetBrains Mono, monospace" font-size="20" fill="#7a5560" font-weight="600">Logistics Suite · the sweet side of freight</text>
+  </g>
+
+  <!-- Top-right "NEWEST" ribbon -->
+  <g transform="translate(1110,40) rotate(8)">
+    <rect x="-70" y="-22" width="140" height="44" fill="#7bc8b5" rx="22"/>
+    <text x="0" y="8" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="22" font-weight="800" fill="#1f3a30">NEWEST</text>
+  </g>
+</svg>
