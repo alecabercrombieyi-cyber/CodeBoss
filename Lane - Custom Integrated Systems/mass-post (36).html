@@ -3328,7 +3328,7 @@ body {
 
   <div class="settings-section">
     <h3>🔄 Mass Post Helper Bookmarklet</h3>
-    <p>Drag this button to your bookmarks bar too. Runs on <strong>DAT Tools</strong> (for bulk rate lookups) AND <strong>Salesforce list view</strong> (for filling posted rates). Detects context automatically — one bookmarklet, two jobs.</p>
+    <p>Drag this button to your bookmarks bar too. Runs on <strong>DAT Tools</strong> (for bulk rate lookups) AND your <strong>Revenova list view</strong> (fills Posted Amount + Benchmark Rate, with a pre-flight check before it edits anything). Detects context automatically — one bookmarklet, two jobs.</p>
     <a class="bookmarklet-link" id="helper-bookmarklet-anchor" href="#" onclick="event.preventDefault(); showToast('⬆ Drag this to your bookmarks bar!');" style="background:linear-gradient(135deg,#A78BFA,#7C3AED);">🔄 Mass Post Helper</a>
   </div>
 
@@ -6712,16 +6712,24 @@ function bulkPasteDATRates() {
 function bulkCopyToSalesforce() {
   if (_bulkRows.length === 0) { showToast('⚠ No rates to copy'); return; }
   var rates = {};
+  var benchmarks = {};
   _bulkRows.forEach(function(r) {
     if (r.suggestedRate && r.suggestedRate > 0) {
       rates[r.loadId] = Math.round(r.suggestedRate);
     }
+    // Benchmark Rate = raw DAT Spot, written back only when we actually have DAT data
+    // for this load. Loads with no data are left alone (no key = bookmarklet skips them).
+    if (r.datData && !r.datData.nodata && r.datData.spot) {
+      benchmarks[r.loadId] = Math.round(r.datData.spot);
+    }
   });
-  if (!Object.keys(rates).length) { showToast('⚠ No non-zero rates to send'); return; }
-  var payload = JSON.stringify({ type: 'sf-fill', rates: rates, fieldLabel: 'Posted Amount', loadField: 'Load #' });
+  if (!Object.keys(rates).length && !Object.keys(benchmarks).length) { showToast('⚠ No rates to send'); return; }
+  var payload = JSON.stringify({ type: 'sf-fill', rates: rates, benchmarks: benchmarks, postedLabel: 'Posted Amount', benchmarkLabel: 'Benchmark Rate', loadField: 'Load #' });
 
   var doCopy = function() {
-    showToast('💰 ' + Object.keys(rates).length + ' rates copied — switch to Salesforce list view and run the 🔄 Mass Post Helper bookmarklet');
+    var n = Object.keys(rates).length, b = Object.keys(benchmarks).length;
+    var label = n + ' posted rate' + (n === 1 ? '' : 's') + (b ? ' + ' + b + ' benchmark' + (b === 1 ? '' : 's') : '');
+    showToast('💰 ' + label + ' copied — switch to Revenova list view and run the 🔄 Mass Post Helper bookmarklet');
   };
   try {
     navigator.clipboard.writeText(payload).then(doCopy, function() {
@@ -7091,52 +7099,83 @@ function buildHelperBookmarklet() {
       + "})();"
       + "return;"
     + "}"
-    // ── SALESFORCE FILL RATES ──
+    // ── REVENOVA / SALESFORCE FILL RATES ──
     + "if(p.type==='sf-fill'){"
-      + "if(host.indexOf('salesforce.com')===-1&&host.indexOf('force.com')===-1){alert('Switch to your Salesforce list view before running this.');return;}"
-      + "if(!p.rates||!Object.keys(p.rates).length){alert('No rates to fill.');return;}"
+      + "if(host.indexOf('salesforce.com')===-1&&host.indexOf('force.com')===-1){alert('Switch to your Revenova list view before running this.');return;}"
+      + "var hasPosted=p.rates&&Object.keys(p.rates).length;"
+      + "var hasBench=p.benchmarks&&Object.keys(p.benchmarks).length;"
+      + "if(!hasPosted&&!hasBench){alert('No rates to fill. Copy them from Mass Post first.');return;}"
       + "var rows=document.querySelectorAll('table tbody tr, [role=row]');"
-      + "if(!rows.length){alert('No table rows found. Make sure you are on a list view.');return;}"
+      + "if(!rows.length){alert('No table rows found. Make sure you are on a Revenova list view.');return;}"
       + "var hdrs=document.querySelectorAll('table thead th, [role=columnheader]');"
-      + "var loadCol=-1,rateCol=-1;"
+      + "var loadCol=-1,postedCol=-1,benchCol=-1;"
       + "for(var h=0;h<hdrs.length;h++){"
         + "var ht=hdrs[h].textContent.trim().toLowerCase();"
         + "if(ht.indexOf('load')!==-1&&loadCol===-1)loadCol=h;"
-        + "if(ht.indexOf('posted')!==-1&&ht.indexOf('amount')!==-1)rateCol=h;"
+        + "if(ht.indexOf('posted')!==-1&&ht.indexOf('amount')!==-1&&postedCol===-1)postedCol=h;"
+        + "if(ht.indexOf('benchmark')!==-1&&benchCol===-1)benchCol=h;"
       + "}"
-      + "if(loadCol===-1||rateCol===-1){alert('Could not find Load or Posted Amount columns.');return;}"
+      + "if(loadCol===-1){alert('Could not find the Load # column on this list view.');return;}"
+      + "if(postedCol===-1&&benchCol===-1){alert('Could not find a Posted Amount or Benchmark Rate column.');return;}"
+      // Normalize a load number to bare digits (load #s are hyperlinks like <a>#1234567</a>)
+      + "function normLoad(s){return String(s).replace(/\\D/g,'').replace(/^0+/,'');}"
+      + "function lookup(map,ln){if(!map)return null;for(var k in map){if(normLoad(k)===ln)return map[k];}return null;}"
+      // ── PRE-FLIGHT: work out what will change before mutating anything ──
+      + "var plan=[],matchedPosted=0,matchedBench=0;"
+      + "for(var ri=0;ri<rows.length;ri++){"
+        + "var cells=rows[ri].querySelectorAll('td,[role=gridcell]');"
+        + "if(cells.length<=loadCol)continue;"
+        + "var lnCell=cells[loadCol];var a=lnCell.querySelector('a');"
+        + "var ln=normLoad(a?a.textContent:lnCell.textContent);"
+        + "if(!ln)continue;"
+        + "var pv=postedCol!==-1?lookup(p.rates,ln):null;"
+        + "var bv=benchCol!==-1?lookup(p.benchmarks,ln):null;"
+        + "if(pv===null&&bv===null)continue;"
+        + "if(pv!==null)matchedPosted++;"
+        + "if(bv!==null)matchedBench++;"
+        + "plan.push({cells:cells,ln:ln,posted:pv,bench:bv});"
+      + "}"
+      + "if(!plan.length){alert('No matching loads found on this list view.\\n\\nMake sure the report rows are visible and the Load # column lines up.');return;}"
+      + "var totalPosted=p.rates?Object.keys(p.rates).length:0;var missPosted=totalPosted-matchedPosted;"
+      + "var msg='Pre-flight check\\n\\n';"
+      + "msg+='\\u2022 '+matchedPosted+' load'+(matchedPosted===1?'':'s')+' matched \\u2192 set Posted Amount\\n';"
+      + "if(benchCol!==-1)msg+='\\u2022 '+matchedBench+' load'+(matchedBench===1?'':'s')+' \\u2192 set Benchmark Rate\\n';"
+      + "else if(hasBench)msg+='\\u2022 No Benchmark Rate column on this view \\u2014 benchmarks skipped\\n';"
+      + "if(missPosted>0)msg+='\\u2022 '+missPosted+' posted rate'+(missPosted===1?'':'s')+' had no matching row on screen\\n';"
+      + "msg+='\\nProceed with the fill?';"
+      + "if(!confirm(msg))return;"
+      // ── FILL ──
       + "var ns2=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
-      + "var filled=0,missing=[];"
       + "function typeIn2(el,v){ns2.call(el,v);el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}"
-      + "function sleep2(ms){return new Promise(function(r){setTimeout(r,ms);});}"
-      + "(async function(){"
-        + "for(var ri=0;ri<rows.length;ri++){"
-          + "var cells=rows[ri].querySelectorAll('td,[role=gridcell]');"
-          + "if(cells.length<=Math.max(loadCol,rateCol))continue;"
-          + "var ln=cells[loadCol].textContent.trim().replace(/\\D/g,'').replace(/^0+/,'');"
-          + "if(!ln)continue;"
-          + "var wanted=null;"
-          + "for(var k in p.rates){var kk=String(k).replace(/\\D/g,'').replace(/^0+/,'');if(kk===ln){wanted=p.rates[k];break;}}"
-          + "if(wanted===null)continue;"
-          + "var cell=cells[rateCol];"
-          + "var editBtn=cell.querySelector('button[title*=\"Edit\"],button[title*=\"edit\"]')||cell.querySelector('.slds-button_icon,[class*=\"edit\"]');"
-          + "if(editBtn){editBtn.click();await sleep2(200);}else{"
-            + "var ev=new MouseEvent('dblclick',{bubbles:true,cancelable:true,view:window});cell.dispatchEvent(ev);await sleep2(200);"
-          + "}"
+      + "function fillCell(cell,v){return new Promise(function(resolve){"
+        + "var editBtn=cell.querySelector('button[title*=\"Edit\"],button[title*=\"edit\"]')||cell.querySelector('.slds-button_icon,[class*=\"edit\"]');"
+        + "if(editBtn){editBtn.click();}else{cell.dispatchEvent(new MouseEvent('dblclick',{bubbles:true,cancelable:true,view:window}));}"
+        + "setTimeout(function(){"
           + "var inp=cell.querySelector('input')||document.querySelector('.inlineEditLayer input,.uiInput--input input,.forceInputInlineEdit input');"
-          + "if(!inp){missing.push(ln);continue;}"
-          + "typeIn2(inp,String(wanted));await sleep2(120);"
-          + "inp.dispatchEvent(new KeyboardEvent('keydown',{bubbles:true,key:'Tab',keyCode:9}));"
-          + "inp.blur();await sleep2(180);"
-          + "filled++;"
+          + "if(!inp){resolve(false);return;}"
+          + "typeIn2(inp,String(v));"
+          + "setTimeout(function(){"
+            + "inp.dispatchEvent(new KeyboardEvent('keydown',{bubbles:true,key:'Tab',keyCode:9}));"
+            + "inp.blur();setTimeout(function(){resolve(true);},150);"
+          + "},120);"
+        + "},220);"
+      + "});}"
+      + "(async function(){"
+        + "var filledP=0,filledB=0,missing=[];"
+        + "for(var i=0;i<plan.length;i++){"
+          + "var it=plan[i];"
+          + "if(it.posted!==null&&postedCol!==-1){if(await fillCell(it.cells[postedCol],it.posted))filledP++;else missing.push(it.ln);}"
+          + "if(it.bench!==null&&benchCol!==-1){if(await fillCell(it.cells[benchCol],it.bench))filledB++;else if(missing.indexOf(it.ln)===-1)missing.push(it.ln);}"
         + "}"
         + "var saveBtn=null;var btns=document.querySelectorAll('button');"
         + "for(var b=0;b<btns.length;b++){if(btns[b].textContent.trim().toLowerCase()==='save'){saveBtn=btns[b];break;}}"
-        + "var msg='Filled '+filled+' rate'+(filled===1?'':'s')+'. ';"
-        + "if(missing.length)msg+=missing.length+' row'+(missing.length===1?'':'s')+' could not be updated. ';"
-        + "if(saveBtn){msg+='Click Save in Salesforce to commit.';setTimeout(function(){saveBtn.focus();saveBtn.style.outline='3px solid #A78BFA';saveBtn.style.outlineOffset='2px';},200);}"
-        + "else{msg+='Look for the Save button at the bottom of the list.';}"
-        + "alert(msg);"
+        + "var done='Filled '+filledP+' Posted Amount'+(filledP===1?'':'s');"
+        + "if(benchCol!==-1)done+=' and '+filledB+' Benchmark Rate'+(filledB===1?'':'s');"
+        + "done+='. ';"
+        + "if(missing.length)done+=missing.length+' cell'+(missing.length===1?'':'s')+' could not be edited (no input appeared \\u2014 send Alec this list view\\u2019s HTML). ';"
+        + "if(saveBtn){done+='Click the highlighted Save button in Revenova to commit.';setTimeout(function(){saveBtn.focus();saveBtn.style.outline='3px solid #A78BFA';saveBtn.style.outlineOffset='2px';saveBtn.scrollIntoView({block:'center'});},200);}"
+        + "else{done+='Look for the Save button at the bottom of the list.';}"
+        + "alert(done);"
       + "})();"
       + "return;"
     + "}"
