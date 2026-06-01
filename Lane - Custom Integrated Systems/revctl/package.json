@@ -1,0 +1,13 @@
+{
+  "name": "revctl",
+  "version": "0.1.0",
+  "description": "Pull Revenova / Salesforce report data straight into your systems — no browser, no Excel export, no file picker.",
+  "bin": { "revctl": "revctl.js" },
+  "main": "revctl.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node -e \"require('./revctl.js')\" && echo ok"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
