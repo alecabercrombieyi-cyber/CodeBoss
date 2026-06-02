@@ -1646,36 +1646,35 @@ function updateMainBtn(){
   btn.textContent=sfUrl?'Get Today\u2019s Loads':'Load Report';
 }
 
-// ── UPDATE REPORT (from dashboard) ──
+// ── Live pull from Revenova via Supabase Edge Function (no file download) ──
+var LM_SB_URL='https://fzuppxczifdmoqtctdlg.supabase.co';
+var LM_SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6dXBweGN6aWZkbW9xdGN0ZGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzU2NzUsImV4cCI6MjA5MDE1MTY3NX0.nHmv_3nMJdHXGj6P0sQPrcE1npBqyCw-XgZTYFq5IBo';
+var LM_PULL_FN=LM_SB_URL+'/functions/v1/revenova-pull';
+
+// ── UPDATE REPORT (from dashboard) — pulls straight into the app, no file ──
 function triggerUpdate(){
-  var sfUrl=localStorage.getItem('bb_sf_url');
-  if(sfUrl){
-    showProgress('Updating Report','Fetching from Salesforce...',['Connecting to Salesforce','Downloading report','Select downloaded file']);
-    progStep(1,5,'Connecting...');
-    var exportUrl=buildSFExportUrl(sfUrl);
-    var iframe=document.getElementById('sf-download-frame');
-    if(!iframe){iframe=document.createElement('iframe');iframe.id='sf-download-frame';iframe.style.display='none';document.body.appendChild(iframe)}
-    iframe.src=exportUrl;
-    setUpdateState('loading');
-    setTimeout(function(){progStep(1,15,'Authenticating...')},2000);
-    setTimeout(function(){progStep(1,22,'Session verified')},4000);
-    setTimeout(function(){progStep(2,32,'Requesting report...')},6000);
-    setTimeout(function(){progStep(2,45,'Generating report...')},9000);
-    setTimeout(function(){progStep(2,55,'Building export...')},12000);
-    setTimeout(function(){progStep(2,65,'Downloading data...')},15000);
-    setTimeout(function(){progStep(2,75,'Downloading data...')},18000);
-    setTimeout(function(){progStep(2,85,'Finalizing download...')},21000);
-    setTimeout(function(){
-      progStep(3,92,'Download ready');
-      setTimeout(function(){
-        progStep(3,95,'Select the file');
-        hideProgress();
-        setUpdateState('pick')
-      },1000)
-    },24000)
-  }else{
-    setUpdateState('pick')
-  }
+  showProgress('Updating Report','Pulling live from Revenova...',['Connecting to Revenova','Fetching report','Refreshing dashboard']);
+  progStep(1,20,'Connecting to Revenova...');
+  setUpdateState('loading');
+  // Use a user-configured report if one is saved, else the server's default.
+  var rep='';var sfUrl=localStorage.getItem('bb_sf_url');
+  if(sfUrl){var m=sfUrl.match(/00O[a-zA-Z0-9]{12,15}/);if(m)rep=m[0]}
+  var url=LM_PULL_FN+(rep?('?report='+encodeURIComponent(rep)):'');
+  fetch(url,{headers:{'Authorization':'Bearer '+LM_SB_ANON,'apikey':LM_SB_ANON}})
+    .then(function(r){
+      progStep(2,55,'Receiving report...');
+      if(!r.ok){return r.text().then(function(t){var msg;try{msg=JSON.parse(t).error}catch(e){msg='HTTP '+r.status}throw new Error(msg)})}
+      return r.text()
+    })
+    .then(function(csv){
+      progStep(2,70,'Processing data...');
+      setTimeout(function(){finishUpdate(csv)},100)
+    })
+    .catch(function(err){
+      hideProgress();
+      setUpdateState('pick'); // fall back to manual Upload
+      alert('Live update failed: '+err.message+'\n\nYou can still tap Upload to load a report file manually.')
+    })
 }
 function setUpdateState(state){
   var d=document.getElementById('upd-default'),l=document.getElementById('upd-loading'),p=document.getElementById('upd-pick'),dn=document.getElementById('upd-done');
