@@ -85,10 +85,10 @@ Date | Load # | Equip | Lane | DAT / Benchmark | Current Rate | New Rate
 - Logic: delta>0 ? Math.floor(cur/50)*50+50 : Math.ceil(cur/50)*50-50
 
 ## Pending Work
-- [ ] Rename all "Salesforce" UI text to "Revenova"
-- [ ] Fix Revenova bookmarklet: load # is a hyperlink, edit requires button click (need DOM inspection)
-- [ ] Add Benchmark Rate field writeback to Revenova (column name: "Benchmark Rate", leave alone if no DAT data)
-- [ ] Pre-flight check before Revenova fill (show which loads matched vs missing)
+- [ ] Rename all "Salesforce" UI text to "Revenova" (helper-bookmarklet UI strings done; tutorial/report-pull text still says "Salesforce")
+- [~] Fix Revenova bookmarklet: load # hyperlink now read via `<a>` text; edit still uses heuristic editBtn→dblclick fallback (exact edit/input/save selectors still need a live DOM dump — bookmarklet now reports which cells failed)
+- [x] Add Benchmark Rate field writeback to Revenova (column "Benchmark Rate", filled from raw DAT Spot, skipped when no DAT data). Payload carries `benchmarks{}`; bookmarklet detects the column and fills it.
+- [x] Pre-flight check before Revenova fill — confirm() dialog shows matched Posted/Benchmark counts + rates with no row on screen, before any edit
 - [ ] Customer Quote + Projected Margin columns (deferred)
 - [ ] RateView trend arrows 3/7/14 day (deferred — needs RateView screenshots)
 - [ ] Sub-4-second DAT scraping (fast version had stale-rate bug — all rates came back identical)
